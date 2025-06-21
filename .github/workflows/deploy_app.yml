@@ -49,6 +49,12 @@ jobs:
     - name: Build 🏗️
       run: npm run build --omit=dev
 
+    - name: Rewrite base href 🖊️
+      uses: kannansuresh/ghaction-base-href-rewriter@v1.0.0
+      with:
+        base_href: APP_BASE_HREF
+        html_path: 'www/index.html'
+
     - name: Upload artifact 💾
       uses: actions/upload-pages-artifact@v3
       with:
