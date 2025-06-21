@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Inbox
+      Калькулятор ВПТК
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -14,14 +14,17 @@
   <ion-header collapse="condense">
     <ion-toolbar>
       <ion-title size="large">
-        Inbox
+        <ion-icon name="calculator" size="large"></ion-icon>
+        Калькулятор ВПТК
       </ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-list>
-    @for (message of getMessages(); track message) {
-      <app-message [message]="message"></app-message>
+    @for (inputField of inputFields; track inputField.label) {
+      <app-input-field [inputField]="inputField" />
     }
   </ion-list>
+
+  <ion-button expand="block">Расчитать <ion-icon name="arrow-forward"></ion-icon> </ion-button>
 </ion-content>
