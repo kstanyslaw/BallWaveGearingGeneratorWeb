@@ -27,6 +27,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      APP_BASE_HREF: /BallWaveGearingGeneratorWeb/
     strategy:
       matrix:
         node-version: [22.x]
@@ -45,7 +47,7 @@ jobs:
       run: npm ci
 
     - name: Build 🏗️
-      run: npm run build --omit=dev --base-href /BallWaveGearingGeneratorWeb/
+      run: npm run build --omit=dev
 
     - name: Upload artifact 💾
       uses: actions/upload-pages-artifact@v3
