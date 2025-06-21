@@ -1,0 +1,7 @@
+{
+  "name": "BallsWaveGearingGeneratorWeb",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
