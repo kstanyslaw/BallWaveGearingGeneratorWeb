@@ -27,8 +27,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    env:
-      APP_BASE_HREF: /BallWaveGearingGeneratorWeb/
     strategy:
       matrix:
         node-version: [22.x]
@@ -52,7 +50,7 @@ jobs:
     - name: Rewrite base href 🖊️
       uses: kannansuresh/ghaction-base-href-rewriter@v1.0.0
       with:
-        base_href: APP_BASE_HREF
+        base_href: /BallWaveGearingGeneratorWeb/
         html_path: 'www/index.html'
 
     - name: Upload artifact 💾
