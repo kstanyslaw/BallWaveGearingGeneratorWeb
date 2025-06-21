@@ -1,0 +1,19 @@
+@if (inputField) {
+  <ion-item>
+    @if (inputField.type === 'boolean') {
+      <ion-toggle
+        [enableOnOffLabels]="true"
+        [checked]="booleanValue"
+      >{{ inputField.label }}</ion-toggle>
+    } @else {
+      <ion-input
+        [label]="inputField.label"
+        [type]="inputField.type"
+        [placeholder]="inputField.placeholder"
+        [helperText]="inputField.helperText"
+      ></ion-input>
+    }
+
+
+  </ion-item>
+}
