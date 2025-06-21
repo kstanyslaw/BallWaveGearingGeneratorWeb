@@ -45,7 +45,7 @@ jobs:
       run: npm ci
 
     - name: Build 🏗️
-      run: npm run build --omit=dev
+      run: npm run build --omit=dev --base-href /BallWaveGearingGeneratorWeb/
 
     - name: Upload artifact 💾
       uses: actions/upload-pages-artifact@v3
@@ -66,12 +66,3 @@ jobs:
       - name: Deploy to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v4
-
-######################################################################################
-# jobs:
-  
-#     - name: Deploy 🚀
-#       uses: peaceiris/actions-gh-pages@v3
-#       with:
-#         github_token: ${{ secrets.GITHUB_TOKEN }}
-#         publish_dir: ./dist
