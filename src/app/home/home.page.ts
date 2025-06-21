@@ -1,8 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RefresherCustomEvent } from '@ionic/angular';
-import { MessageComponent } from '../message/message.component';
-
-import { DataService, Message } from '../services/data.service';
+import { InputDataService } from '../services/input-data.service';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +9,7 @@ import { DataService, Message } from '../services/data.service';
   standalone: false,
 })
 export class HomePage {
-  private data = inject(DataService);
+  private inputDataService = inject(InputDataService);
   constructor() {}
 
   refresh(ev: any) {
@@ -20,7 +18,7 @@ export class HomePage {
     }, 3000);
   }
 
-  getMessages(): Message[] {
-    return this.data.getMessages();
+  get inputFields () {
+    return this.inputDataService.InputFields;
   }
 }
