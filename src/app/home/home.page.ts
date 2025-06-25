@@ -35,7 +35,19 @@ export class HomePage {
     console.log(this.paramsForm.value);
   }
 
-  initForm() {
+  /**
+   * Initializes the reactive form for the component by dynamically creating form controls
+   * based on the `inputFields` and `inputFlags` arrays. Each form control is initialized
+   * with its corresponding placeholder value and marked as required using Angular's Validators.
+   * The constructed form group is then assigned to `paramsForm`.
+   *
+   * @remarks
+   * This method assumes that `inputFields` and `inputFlags` are arrays of `InputField` objects,
+   * each containing a `formControlName` and a `placeholder` property.
+   *
+   * @returns void
+   */
+  initForm(): void {
     const formGroup : any = {};
     this.inputFields.map((field: InputField) => {
       formGroup[field.formControlName] = [ field.placeholder, Validators.required ];
@@ -46,6 +58,13 @@ export class HomePage {
     this.paramsForm = this.fb.group(formGroup);
   }
 
+  /**
+   * Retrieves a form control from the `paramsForm` by its name.
+   *
+   * @param name - The name of the form control to retrieve.
+   * @returns The `FormControl` instance associated with the given name.
+   * @throws {Error} If the form control with the specified name is not found.
+   */
   getControl(name: string): FormControl {
     const control = this.paramsForm.get(name);
     if (!control) {
