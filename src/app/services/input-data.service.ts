@@ -14,8 +14,10 @@ export class InputDataService {
     { formControlName: 'Rout', defaultValue: '38', type: 'number', helperText: 'Внешний радиус впадин жесткого колеса', label: 'Радиус впадин' },
     { formControlName: 'D', defaultValue: '90', type: 'number', helperText: 'Внешний диаметр редуктора (опционально)', label: 'Диаметр редуктора' },
     { formControlName: 'u', defaultValue: '1', type: 'number', helperText: 'Число волн, создаваемых волнообразователем', label: 'Число волн' },
-    // Flags
-    { formControlName: 'BASE_WHEEL_SHAPE', defaultValue: 'True', type: 'boolean', label: 'Профиль жесткого колеса' },
+  ];
+
+  private readonly inputFlags = [
+    { formControlName: 'BASE_WHEEL_SHAPE', defaultValue: 'True', type: 'boolean', label: 'Профиль жесткого колеса', helperText: '' },
     { formControlName: 'SEPARATOR', defaultValue: 'True', type: 'boolean', label: 'Сепаратор' },
     { formControlName: 'ECCENTRIC', defaultValue: 'True', type: 'boolean', label: 'Волнообразователь/эксцентрик' },
     { formControlName: 'BALLS', defaultValue: 'False', type: 'boolean', label: 'Шарики' },
@@ -25,11 +27,18 @@ export class InputDataService {
   constructor() { }
 
   public get InputFields(): InputField[] {
-    return this.inputData.map((i) => ({
-      label: i.label,
-      helperText: i.helperText || '',
-      type: i.type,
+    return this.inputData.map((i) => this.convertData(i));
+  }
+
+  public get InputFlags(): InputField[] {
+    return this.inputFlags.map((i) => this.convertData(i));
+  }
+
+  private convertData(i: any): InputField {
+    return {
+      ...i,
+      helperText: i?.helperText ?? '',
       placeholder: i.defaultValue,
-    } as InputField));
+    } as InputField;
   }
 }

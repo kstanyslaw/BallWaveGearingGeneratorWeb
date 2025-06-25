@@ -20,11 +20,37 @@
     </ion-toolbar>
   </ion-header>
 
+  <form [formGroup]="paramsForm" (ngSubmit)="onSubmit()">
   <ion-list>
+    <ion-list-header>
+      <ion-label>
+        <h1>Основные параметры</h1>
+      </ion-label>
+    </ion-list-header>
+
     @for (inputField of inputFields; track inputField.label) {
-      <app-input-field [inputField]="inputField" />
+      <app-input-field [inputField]="inputField" [control]="getControl(inputField.formControlName)"/>
     }
   </ion-list>
 
-  <ion-button expand="block">Расчитать <ion-icon name="arrow-forward"></ion-icon> </ion-button>
+    <ion-list-header>
+      <ion-label>
+        <h1>Профили чертежа</h1>
+      </ion-label>
+    </ion-list-header>
+
+    @for (inputFlag of inputFlags; track inputFlag.label) {
+      <app-input-field [inputField]="inputFlag" [control]="getControl(inputFlag.formControlName)"></app-input-field>
+    }
+
+  <ion-button
+    expand="block"
+    type="submit"
+    [disabled]="!paramsForm.valid">
+      Расчитать
+      <ion-icon name="arrow-forward"></ion-icon>
+  </ion-button>
+
+  </form>
+
 </ion-content>
