@@ -17,6 +17,7 @@ export class HomePage {
   paramsForm!: FormGroup;
   inputFields!: InputField[];
   inputFlags!: InputField[];
+  showFlags: Boolean = false;
 
   constructor(private fb: FormBuilder) {}
 
@@ -62,7 +63,7 @@ export class HomePage {
       zg,
       zsh,
     } = this.calcService.calculateBasicParams(dsh, u, i,Rout);
-    console.log(this.calcService.calculateBasicParams(dsh, u, i,Rout));
+    console.log(this.paramsForm.value);
     console.log(`
 ........................
 Основные параметры ВПТК:
@@ -117,5 +118,9 @@ export class HomePage {
       throw new Error(`Form control ${name} not found`);
     }
     return control as FormControl;
+  }
+
+  toggleFlags() {
+    this.showFlags = !this.showFlags;
   }
 }

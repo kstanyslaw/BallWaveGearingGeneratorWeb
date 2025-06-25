@@ -37,11 +37,21 @@
       <ion-label>
         <h1>Профили чертежа</h1>
       </ion-label>
-      <ion-button>See All</ion-button>
+      <ion-button (click)="toggleFlags()">
+        @if (!showFlags) {
+          <slot>Показать</slot>
+        } @else {
+          <slot>Скрыть</slot>
+        }
+      </ion-button>
     </ion-list-header>
 
     @for (inputFlag of inputFlags; track inputFlag.label) {
-      <app-input-field [inputField]="inputFlag" [control]="getControl(inputFlag.formControlName)"></app-input-field>
+      <app-input-field
+        [inputField]="inputFlag"
+        [control]="getControl(inputFlag.formControlName)"
+        [hidden]="!showFlags"
+      />
     }
 
   <ion-button
