@@ -13,7 +13,7 @@ export class InputDataService {
     { formControlName: 'dsh', defaultValue: '6', type: 'number', helperText: 'Диаметр шариков от подшипника', label: 'Диаметр шариков' },
     { formControlName: 'Rout', defaultValue: '38', type: 'number', helperText: 'Внешний радиус впадин жесткого колеса', label: 'Радиус впадин' },
     { formControlName: 'D', defaultValue: '90', type: 'number', helperText: 'Внешний диаметр редуктора (опционально)', label: 'Диаметр редуктора' },
-    { formControlName: 'u', defaultValue: '1', type: 'number', helperText: 'Число волн, создаваемых волнообразователем', label: 'Число волн' },
+    { formControlName: 'u', defaultValue: '1', type: 'number', helperText: 'Число волн, создаваемых волнообразователем (НЕИЗМЕНЯЕМО XD)', label: 'Число волн', readonly: true },
   ];
 
   private readonly inputFlags = [

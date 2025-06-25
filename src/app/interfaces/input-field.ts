@@ -7,4 +7,5 @@ export interface InputField {
   defaultValue: string;
   formControlName: string;
   helperText?: string;
+  readonly?: boolean;
 }
