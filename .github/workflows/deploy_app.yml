@@ -53,11 +53,17 @@ jobs:
         base_href: /BallWaveGearingGeneratorWeb/
         html_path: 'www/index.html'
 
+    - name: Handle Angular routing on GitHub Pages
+      run: cp www/index.html www/404.html
+
+    - name: Rename project dir
+      run: mv www docs
+
     - name: Upload artifact 💾
       uses: actions/upload-pages-artifact@v3
       with:
         # Upload entire repository
-        path: ./www
+        path: ./docs
 
   # Single deploy job since we're just deploying
   deploy:
