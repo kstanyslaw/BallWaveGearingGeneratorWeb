@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
+import Decimal from 'decimal.js';
 
 @Injectable({
   providedIn: 'root'
@@ -48,29 +49,34 @@ export class CalculationService {
     i: number,
     Rout: number
   ): BasicParams {
-    let e = 0.2 * dsh;
-    let zg = (i + 1) * u;
-    let zsh = i;
-    let Rin = Rout - 2 * e;
-    let rsh = dsh / 2;
-    let rd = Rin + e - dsh;
-    let hc = 2.2 * e;
-    let Rsep_m = rd + rsh;
-    let Rsep_out = Rsep_m + hc / 2;
-    let Rsep_in = Rsep_m - hc / 2;
+    Decimal.set({precision: 4});
+    const _dsh = new Decimal(dsh);
+    const _u = new Decimal(u);
+    const _i = new Decimal(i);
+    const _Rout = new Decimal(Rout);
+    let e = _dsh.mul(0.2);
+    let zg = _u.mul(_i.plus(1));
+    let zsh = _i;
+    let Rin = _Rout.minus((e).mul(2));
+    let rsh = _dsh.div(2);
+    let rd = Rin.plus(e).minus(_dsh);
+    let hc = e.mul(2.2);
+    let Rsep_m = rd.plus(rsh);
+    let Rsep_out = hc.div(2).plus(Rsep_m);
+    let Rsep_in = Rsep_m.minus(hc.div(2));
     return {
-      dsh,
-      e,
-      hc,
-      i,
-      rd,
-      Rin,
-      Rout,
-      Rsep_in,
-      Rsep_m,
-      Rsep_out,
-      zg,
-      zsh,
+      dsh: _dsh.toNumber(),
+      e: e.toNumber(),
+      hc: hc.toNumber(),
+      i: _i.toNumber(),
+      rd: rd.toNumber(),
+      Rin: Rin.toNumber(),
+      Rout: _Rout.toNumber(),
+      Rsep_in: Rsep_in.toNumber(),
+      Rsep_m: Rsep_m.toNumber(),
+      Rsep_out: Rsep_out.toNumber(),
+      zg: zg.toNumber(),
+      zsh: zsh.toNumber(),
     }
   }
 }
