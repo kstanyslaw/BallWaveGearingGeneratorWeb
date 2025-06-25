@@ -1,8 +1,15 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Калькулятор ВПТК
-    </ion-title>
+    <ion-icon name="calculator" size="large" slot="start"></ion-icon>
+      <ion-title size="large">
+        Калькулятор ВПТК
+      </ion-title>
+      <ion-buttons slot="end">
+          <ion-button color="dark" (click)="toggleTheme()">
+            @if (darkTheme) {<ion-icon slot="icon-only" ios="sunny-outline" md="sunny"></ion-icon>}
+            @else {<ion-icon slot="icon-only" ios="moon-outline" md="moon"></ion-icon>}
+          </ion-button>
+        </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -11,48 +18,41 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">
-        <ion-icon name="calculator" size="large"></ion-icon>
-        Калькулятор ВПТК
-      </ion-title>
-    </ion-toolbar>
-  </ion-header>
-
   <form [formGroup]="paramsForm" (ngSubmit)="onSubmit()">
-  <ion-list>
-    <ion-list-header>
-      <ion-label>
-        <h1>Основные параметры</h1>
-      </ion-label>
-    </ion-list-header>
+  <ion-list-header>
+    <ion-label>
+      <h1>Основные параметры</h1>
+    </ion-label>
+  </ion-list-header>
+  <ion-list [inset]="true">
 
     @for (inputField of inputFields; track inputField.label) {
       <app-input-field [inputField]="inputField" [control]="getControl(inputField.formControlName)"/>
     }
   </ion-list>
 
-    <ion-list-header>
-      <ion-label>
-        <h1>Профили чертежа</h1>
-      </ion-label>
-      <ion-button (click)="toggleFlags()">
-        @if (!showFlags) {
-          <slot>Показать</slot>
-        } @else {
-          <slot>Скрыть</slot>
-        }
-      </ion-button>
-    </ion-list-header>
+  <ion-list-header>
+    <ion-label>
+      <h1>Профили чертежа</h1>
+    </ion-label>
+    <ion-button (click)="toggleFlags()">
+      @if (!showFlags) {
+        <slot>Показать</slot>
+      } @else {
+        <slot>Скрыть</slot>
+      }
+    </ion-button>
+  </ion-list-header>
+  <ion-list [inset]="true" [style.display]="showFlags ? 'block' : 'none'">
 
     @for (inputFlag of inputFlags; track inputFlag.label) {
       <app-input-field
         [inputField]="inputFlag"
         [control]="getControl(inputFlag.formControlName)"
-        [hidden]="!showFlags"
       />
     }
+
+  </ion-list>
 
   <ion-button
     expand="block"

@@ -17,7 +17,8 @@ export class HomePage {
   paramsForm!: FormGroup;
   inputFields!: InputField[];
   inputFlags!: InputField[];
-  showFlags: Boolean = false;
+  showFlags: boolean = false;
+  darkTheme: boolean = true;
 
   constructor(private fb: FormBuilder) {}
 
@@ -28,6 +29,14 @@ export class HomePage {
   }
 
   ngOnInit() {
+    // Theme init
+    const localStorageTheme = localStorage.getItem('theme');
+    const systemTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    this.darkTheme = localStorage.getItem('theme') === null
+      ? systemTheme
+      : localStorageTheme === 'dark';
+    this.toggleDarkPalette(this.darkTheme);
+    // Forms init
     this.inputFields = this.inputDataService.InputFields;
     this.inputFlags = this.inputDataService.InputFlags;
     this.paramsForm = new FormGroup({});
@@ -122,5 +131,17 @@ export class HomePage {
 
   toggleFlags() {
     this.showFlags = !this.showFlags;
+  }
+
+  // Listen for the toggle check/uncheck to toggle the dark palette
+  toggleTheme() {
+    this.darkTheme = !this.darkTheme;
+    this.toggleDarkPalette(this.darkTheme);
+  }
+
+  // Add or remove the "ion-palette-dark" class on the html element
+  toggleDarkPalette(shouldAdd: boolean) {
+    localStorage.setItem('theme', shouldAdd ? 'dark' : 'light');
+    document.documentElement.classList.toggle('ion-palette-dark', shouldAdd);
   }
 }
