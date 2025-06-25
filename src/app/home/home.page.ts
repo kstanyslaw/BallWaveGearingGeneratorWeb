@@ -3,6 +3,7 @@ import { RefresherCustomEvent } from '@ionic/angular';
 import { InputDataService } from '../services/input-data.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { InputField } from '../interfaces/input-field';
+import { CalculationService } from '../services/calculation.service';
 
 @Component({
   selector: 'app-home',
@@ -12,9 +13,11 @@ import { InputField } from '../interfaces/input-field';
 })
 export class HomePage {
   private inputDataService = inject(InputDataService);
+  private calcService = inject(CalculationService);
   paramsForm!: FormGroup;
   inputFields!: InputField[];
   inputFlags!: InputField[];
+  showFlags: Boolean = false;
 
   constructor(private fb: FormBuilder) {}
 
@@ -32,7 +35,51 @@ export class HomePage {
   }
 
   onSubmit(): void {
+    const {
+      OUT_FILE,
+      RESOLUTION,
+      i,
+      dsh,
+      Rout,
+      D,
+      u,
+      BASE_WHEEL_SHAPE,
+      SEPARATOR,
+      ECCENTRIC,
+      BALLS,
+      OUT_DIAMETER
+    } = this.paramsForm.value;
+    const {
+      // dsh,
+      e,
+      hc,
+      // i,
+      rd,
+      Rin,
+      // Rout,
+      Rsep_in,
+      Rsep_m,
+      Rsep_out,
+      zg,
+      zsh,
+    } = this.calcService.calculateBasicParams(dsh, u, i,Rout);
     console.log(this.paramsForm.value);
+    console.log(`
+........................
+Основные параметры ВПТК:
+- Передаточное число: ", ${i})
+- Эксцентриситет: ", ${e})
+- Радиус эксцентрика: ", ${rd})
+- Внешний радиус профиля жесткого колеса: ", ${Rout})
+- Внутренний радиус профиля жесткого колеса: ", ${Rin})
+- Число впадин профиля жесткого колеса: ", ${zg})
+- Число шариков: ", ${zsh})
+- Диаметр шариков: ", ${dsh})
+- Делительный радиус сепаратора: ", ${Rsep_m})
+- Толщина сепаратора: ", ${hc})
+........................
+........................
+    `);
   }
 
   /**
@@ -53,7 +100,7 @@ export class HomePage {
       formGroup[field.formControlName] = [ field.placeholder, Validators.required ];
     });
     this.inputFlags.map((flag: InputField) => {
-      formGroup[flag.formControlName] = [ flag.placeholder, Validators.required ];
+      formGroup[flag.formControlName] = [ flag.placeholder.toLowerCase() === 'true', Validators.required ];
     })
     this.paramsForm = this.fb.group(formGroup);
   }
@@ -71,5 +118,9 @@ export class HomePage {
       throw new Error(`Form control ${name} not found`);
     }
     return control as FormControl;
+  }
+
+  toggleFlags() {
+    this.showFlags = !this.showFlags;
   }
 }

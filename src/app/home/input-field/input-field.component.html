@@ -3,9 +3,9 @@
     @if (inputField.type === 'boolean') {
       <ion-toggle
         [enableOnOffLabels]="true"
-        [checked]="booleanValue"
         [helperText]="inputField.helperText"
         [errorText]=""
+        [formControl]="control"
       >{{ inputField.label }}</ion-toggle>
     } @else {
       <ion-input
@@ -15,6 +15,7 @@
         [helperText]="inputField.helperText"
         [formControl]="control"
         [errorText]=""
+        [readonly]="inputField.readonly ?? false"
       ></ion-input>
     }
 
