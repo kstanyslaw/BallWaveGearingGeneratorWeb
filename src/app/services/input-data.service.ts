@@ -27,18 +27,18 @@ export class InputDataService {
   constructor() { }
 
   public get InputFields(): InputField[] {
-    return this.inputData.map((i) => ({
-      ...i,
-      helperText: i.helperText || '',
-      placeholder: i.defaultValue,
-    } as InputField));
+    return this.inputData.map((i) => this.convertData(i));
   }
 
   public get InputFlags(): InputField[] {
-    return this.inputFlags.map((i) => ({
+    return this.inputFlags.map((i) => this.convertData(i));
+  }
+
+  private convertData(i: any): InputField {
+    return {
       ...i,
       helperText: i?.helperText ?? '',
       placeholder: i.defaultValue,
-    } as InputField));
+    } as InputField;
   }
 }
