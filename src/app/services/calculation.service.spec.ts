@@ -38,12 +38,22 @@ describe('CalculationService', () => {
 
       const result = service.calculateBasicParams(dsh, u, i, Rout);
 
-      expect(result).toEqual(expected);
+      expect(result.dsh.toString()).toBe(expected.dsh.toString());
+      expect(result.e.toString()).toBe(expected.e.toString());
+      expect(result.hc.toString()).toBe(expected.hc.toString());
+      expect(result.i.toString()).toBe(expected.i.toString());
+      expect(result.rd.toString()).toBe(expected.rd.toString());
+      expect(result.Rin.toString()).toBe(expected.Rin.toString());
+      expect(result.Rout.toString()).toBe(expected.Rout.toString());
+      expect(result.Rsep_in.toString()).toBe(expected.Rsep_in.toString());
+      expect(result.Rsep_m.toString()).toBe(expected.Rsep_m.toString());
+      expect(result.Rsep_out.toString()).toBe(expected.Rsep_out.toString());
+      expect(result.zg.toString()).toBe(expected.zg.toString());
+      expect(result.zsh.toString()).toBe(expected.zsh.toString());
     });
 
     it('should handle zero values correctly', () => {
-      const result = service.calculateBasicParams(0, 0, 0, 0);
-      expect(result).toEqual({
+      const expected = {
         dsh: 0,
         e: 0,
         hc: 0,
@@ -56,21 +66,34 @@ describe('CalculationService', () => {
         Rsep_out: 0,
         zg: 0,
         zsh: 0,
-      });
+      };
+      const result = service.calculateBasicParams(0, 0, 0, 0);
+      expect(result.dsh.toString()).toBe(expected.dsh.toString());
+      expect(result.e.toString()).toBe(expected.e.toString());
+      expect(result.hc.toString()).toBe(expected.hc.toString());
+      expect(result.i.toString()).toBe(expected.i.toString());
+      expect(result.rd.toString()).toBe(expected.rd.toString());
+      expect(result.Rin.toString()).toBe(expected.Rin.toString());
+      expect(result.Rout.toString()).toBe(expected.Rout.toString());
+      expect(result.Rsep_in.toString()).toBe(expected.Rsep_in.toString());
+      expect(result.Rsep_m.toString()).toBe(expected.Rsep_m.toString());
+      expect(result.Rsep_out.toString()).toBe(expected.Rsep_out.toString());
+      expect(result.zg.toString()).toBe(expected.zg.toString());
+      expect(result.zsh.toString()).toBe(expected.zsh.toString());
     });
 
     it('should correctly calculate when i is negative', () => {
       const result = service.calculateBasicParams(10, 5, -2, 100);
-      expect(result.zg).toBe(-5); // (i + 1) * u = (-2 + 1) * 5 = -5
-      expect(result.zsh).toBe(-2); // i = -2
+      expect(result.zg.toString()).toBe((-5).toString()); // (i + 1) * u = (-2 + 1) * 5 = -5
+      expect(result.zsh.toString()).toBe((-2).toString()); // i = -2
     });
 
     it('should correctly calculate when Rout is less than 2e', () => {
       const dsh = 10; // e = 2
       const Rout = 3; // smaller then 2e=4
       const result = service.calculateBasicParams(dsh, 5, 3, Rout);
-      expect(result.Rin).toBe(-1); // Rout - 2e = 3 - 4 = -1
-      expect(result.rd).toBe(-9);  // Rin + e - dsh = -1 + 2 - 10 = -9
+      expect(result.Rin.toString()).toBe((-1).toString()); // Rout - 2e = 3 - 4 = -1
+      expect(result.rd.toString()).toBe((-9).toString());  // Rin + e - dsh = -1 + 2 - 10 = -9
     });
 
     it('should handle floating point values correctly', () => {
