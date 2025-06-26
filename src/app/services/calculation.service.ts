@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import Decimal from 'decimal.js';
+import { create, all } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -49,34 +49,57 @@ export class CalculationService {
     i: number,
     Rout: number
   ): BasicParams {
-    Decimal.set({precision: 4});
-    const _dsh = new Decimal(dsh);
-    const _u = new Decimal(u);
-    const _i = new Decimal(i);
-    const _Rout = new Decimal(Rout);
-    let e = _dsh.mul(0.2);
-    let zg = _u.mul(_i.plus(1));
-    let zsh = _i;
-    let Rin = _Rout.minus((e).mul(2));
-    let rsh = _dsh.div(2);
-    let rd = Rin.plus(e).minus(_dsh);
-    let hc = e.mul(2.2);
-    let Rsep_m = rd.plus(rsh);
-    let Rsep_out = hc.div(2).plus(Rsep_m);
-    let Rsep_in = Rsep_m.minus(hc.div(2));
+    const math = create(all, { number: 'BigNumber' });
+    let e = math.evaluate(`${dsh} * 0.2`);
+    let zg = math.evaluate(`${u} * (${i} + 1)`);
+    let zsh = i;
+    let Rin = math.evaluate(`${Rout} - ${e} * 2`);
+    let rsh = math.divide(dsh, 2);
+    let rd = math.chain(Rin).add(e).subtract(dsh).done();
+    let hc = math.evaluate(`${e} * 2.2`);
+    let Rsep_m = math.add(rd, rsh);
+    let Rsep_out = math.chain(hc).divide(2).add(Rsep_m).done();
+    let Rsep_in = math.evaluate(`${Rsep_m} - (${hc} / 2)`);
     return {
-      dsh: _dsh.toNumber(),
-      e: e.toNumber(),
-      hc: hc.toNumber(),
-      i: _i.toNumber(),
-      rd: rd.toNumber(),
-      Rin: Rin.toNumber(),
-      Rout: _Rout.toNumber(),
-      Rsep_in: Rsep_in.toNumber(),
-      Rsep_m: Rsep_m.toNumber(),
-      Rsep_out: Rsep_out.toNumber(),
-      zg: zg.toNumber(),
-      zsh: zsh.toNumber(),
+      dsh,
+      e,
+      hc,
+      i,
+      rd,
+      Rin,
+      Rout,
+      Rsep_in,
+      Rsep_m,
+      Rsep_out,
+      zg,
+      zsh,
     }
   }
+
+  // public calculateAdditionalParams(
+  //   RESOLUTION: number,
+  //   zg: number,
+  //   rsh: number,
+  //   e: number,
+  //   rd: number,
+  //   zsh: number,
+  // ) {
+  //   let theta = math.range(0, math.multiply(2, math.pi), RESOLUTION)
+
+  //   let S = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2))
+  //   let l = e * np.cos(zg * theta) + S
+  //   let Xi = np.arctan2(e*zg*np.sin(zg*theta), S)
+
+  //   let x = l*np.sin(theta) + rsh * np.sin(theta + Xi)
+  //   let y = l*np.cos(theta) + rsh * np.cos(theta + Xi)
+
+  //   let xy = np.stack((x, y), axis=1)
+
+
+  //   let sh_angle = math.range(0, 1, zsh+1) * 2*np.pi
+  //   let S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2))
+  //   let l_Sh = e * np.cos(zg * sh_angle) + S_sh
+  //   let x_sh = l_Sh*np.sin(sh_angle)
+  //   let y_sh = l_Sh*np.cos(sh_angle)
+  // }
 }

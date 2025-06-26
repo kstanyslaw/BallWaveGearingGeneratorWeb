@@ -72,7 +72,6 @@ export class HomePage {
       zg,
       zsh,
     } = this.calcService.calculateBasicParams(dsh, u, i,Rout);
-    console.log(this.paramsForm.value);
     console.log(`
 ........................
 Основные параметры ВПТК:
