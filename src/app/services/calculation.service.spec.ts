@@ -14,7 +14,7 @@ describe('CalculationService', () => {
     expect(service).toBeTruthy();
   });
 
-  fdescribe('service.calculateBasicParams', () => {
+  describe('service.calculateBasicParams', () => {
     it('should correctly calculate all parameters for basic input', () => {
       const dsh = 10;
       const u = 5;
