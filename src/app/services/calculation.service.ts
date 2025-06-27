@@ -136,4 +136,23 @@ export class CalculationService {
       .done();
     return math.atan2(atanArg, S as Matrix);
   }
+
+  private getX_Y(theta: Matrix, l: MathType, Xi: MathType, rsh: number, func: (value: any) => MathType) {
+    // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
+    const math = create(all, { number: 'BigNumber' });
+    // termA = l * np.sin(theta)
+    const termA = math
+      .chain(theta)
+      .map(func)
+      .multiply(l)
+      .done();
+    // termB = rsh * np.sin(theta + Xi)
+    const termB = math
+      .chain(theta)
+      .add(Xi as Matrix)
+      .map(func)
+      .multiply(rsh)
+      .done();
+    return math.add(termA, termB);
+  }
 }
