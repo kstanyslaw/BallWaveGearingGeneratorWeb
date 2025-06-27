@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all } from 'mathjs'
+import { create, all, Matrix, MathType, atan2 } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -76,6 +76,67 @@ export class CalculationService {
     }
   }
 
+  public calculateAdditionalParams(
+    RESOLUTION: number,
+    zg: number,
+    rsh: number,
+    e: number,
+    rd: number,
+    zsh: number,
+  ) {
+    const math = create(all, { number: 'BigNumber' });
+    const theta = math.range(0, math.multiply(2, math.pi), RESOLUTION);
+
+    // S = math.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
+    const S = this.getS(theta, zg, e, rsh, rd);
+    // l = e * np.cos(zg * theta) + S;
+    const l = math
+      .chain(theta)
+      .multiply(zg)
+      .map(math.cos)
+      .multiply(e)
+      .add(S)
+      .done();
+    // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
+    const Xi = this.getXi(theta, zg, e, S);
+
+    // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
+    const x = this.getX_Y(theta, l, Xi, rsh, math.sin);
+    // y = l*np.cos(theta) + rsh * np.cos(theta + Xi);
+    const y = this.getX_Y(theta, l, Xi, rsh, math.cos);
+
+    // xy = np.stack((x, y), axis=1);
+    const xy = math.concat(x, y, 1);
+
+    // sh_angle = math.range(0, 1, zsh+1) * 2*np.pi;
+    const sh_angle = math
+      .chain(math.range(0, 1, zsh + 1))
+      .multiply(math.pi)
+      .multiply(2)
+      .done();
+    // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
+    const S_sh = this.getS(sh_angle, zg, e, rsh, rd);
+    // l_Sh = e * np.cos(zg * sh_angle) + S_sh;
+    const l_Sh = math
+      .chain(sh_angle)
+      .multiply(zg)
+      .map(math.cos)
+      .multiply(e)
+      .add(S_sh)
+      .done();
+    // x_sh = l_Sh*np.sin(sh_angle);
+    const x_sh = math
+      .chain(sh_angle)
+      .map(math.sin)
+      .multiply(l_Sh)
+      .done();
+    // y_sh = l_Sh*np.cos(sh_angle);
+    const y_sh = math
+      .chain(sh_angle)
+      .map(math.cos)
+      .multiply(l_Sh)
+      .done();
+  }
 
   /**
    * Calculates the result matrix based on the provided angular matrix, gear teeth count, eccentricity, shaft radius, and disk radius.
