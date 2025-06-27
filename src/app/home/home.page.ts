@@ -108,7 +108,7 @@ export class HomePage {
       formGroup[field.formControlName] = [ field.placeholder, Validators.required ];
     });
     this.inputFlags.map((flag: InputField) => {
-      formGroup[flag.formControlName] = [ flag.placeholder.toLowerCase() === 'true', Validators.required ];
+      formGroup[flag.formControlName] = [ flag.placeholder.toLowerCase() === 'true' ];
     })
     this.paramsForm = this.fb.group(formGroup);
   }
