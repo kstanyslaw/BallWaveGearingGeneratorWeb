@@ -86,20 +86,30 @@ export class CalculationService {
   // ) {
   //   let theta = math.range(0, math.multiply(2, math.pi), RESOLUTION)
 
-  //   let S = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2))
-  //   let l = e * np.cos(zg * theta) + S
-  //   let Xi = np.arctan2(e*zg*np.sin(zg*theta), S)
-
-  //   let x = l*np.sin(theta) + rsh * np.sin(theta + Xi)
-  //   let y = l*np.cos(theta) + rsh * np.cos(theta + Xi)
-
-  //   let xy = np.stack((x, y), axis=1)
-
-
-  //   let sh_angle = math.range(0, 1, zsh+1) * 2*np.pi
-  //   let S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2))
-  //   let l_Sh = e * np.cos(zg * sh_angle) + S_sh
-  //   let x_sh = l_Sh*np.sin(sh_angle)
-  //   let y_sh = l_Sh*np.cos(sh_angle)
-  // }
+  private getS(theta: Matrix, zg: number, e: number, rsh: number, rd: number): MathType {
+    // S = math.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
+    // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
+    // Difference between S and S_sh is only `sh_angle` instead of `theta`
+    const math = create(all, { number: 'BigNumber' });
+    // subtrahend = (rsh + rd) ** 2
+    const subtrahend = math
+      .chain(rsh)
+      .add(rd)
+      .pow(2)
+      .done();
+    // subtractor = np.power(e * np.sin(zg * theta), 2)
+    const subtractor = math
+      .chain(theta)
+      .multiply(zg)
+      .map(math.sin)
+      .multiply(e)
+      .pow(2)
+      .done();
+    // sqrt(subtrahend - subtractor)
+    return math
+      .chain(subtrahend)
+      .subtract(subtractor)
+      .pow(0.5)
+      .done() as Matrix;
+  }
 }
