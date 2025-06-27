@@ -122,4 +122,18 @@ export class CalculationService {
       .pow(0.5)
       .done() as Matrix;
   }
+
+  private getXi(theta: Matrix, zg: number, e: number, S: MathType): Matrix {
+    // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
+    const math = create(all, { number: 'BigNumber' });
+    // atanArg = e*zg*np.sin(zg*theta)
+    const atanArg = math
+      .chain(theta)
+      .multiply(theta)
+      .map(math.sin)
+      .multiply(zg)
+      .multiply(e)
+      .done();
+    return math.atan2(atanArg, S as Matrix);
+  }
 }
