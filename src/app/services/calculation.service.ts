@@ -76,16 +76,26 @@ export class CalculationService {
     }
   }
 
-  // public calculateAdditionalParams(
-  //   RESOLUTION: number,
-  //   zg: number,
-  //   rsh: number,
-  //   e: number,
-  //   rd: number,
-  //   zsh: number,
-  // ) {
-  //   let theta = math.range(0, math.multiply(2, math.pi), RESOLUTION)
 
+  /**
+   * Calculates the result matrix based on the provided angular matrix, gear teeth count, eccentricity, shaft radius, and disk radius.
+   *
+   * @note To calculate S_sh use sh_angle instead of theta.
+   *
+   * The calculation involves:
+   * 1. Multiplying each element of the `theta` matrix by `zg`.
+   * 2. Applying the sine function to each element of the resulting matrix.
+   * 3. Multiplying each sine value by `e` and squaring the result.
+   * 4. Adding `rsh` and `rd`, squaring the sum, and subtracting the squared sine values from this.
+   * 5. Taking the square root of the result.
+   *
+   * @param theta (sh_angle) - A matrix of angular values (in radians).
+   * @param zg - The number of gear teeth.
+   * @param e - The eccentricity value.
+   * @param rsh - The shaft radius.
+   * @param rd - The disk radius.
+   * @returns The resulting matrix after performing the described calculations.
+   */
   private getS(theta: Matrix, zg: number, e: number, rsh: number, rd: number): MathType {
     // S = math.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
     // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
