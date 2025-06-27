@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import Decimal from 'decimal.js';
+import { create, all, Matrix, MathType, MathJsInstance } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
 })
 export class CalculationService {
+  private math: MathJsInstance;
 
-  constructor() { }
+  constructor() {
+    this.math = create(all, { number: 'BigNumber' });
+  }
 
   /**
    * Calculates fundamental geometric parameters for mechanical component design.
@@ -49,34 +52,209 @@ export class CalculationService {
     i: number,
     Rout: number
   ): BasicParams {
-    Decimal.set({precision: 4});
-    const _dsh = new Decimal(dsh);
-    const _u = new Decimal(u);
-    const _i = new Decimal(i);
-    const _Rout = new Decimal(Rout);
-    let e = _dsh.mul(0.2);
-    let zg = _u.mul(_i.plus(1));
-    let zsh = _i;
-    let Rin = _Rout.minus((e).mul(2));
-    let rsh = _dsh.div(2);
-    let rd = Rin.plus(e).minus(_dsh);
-    let hc = e.mul(2.2);
-    let Rsep_m = rd.plus(rsh);
-    let Rsep_out = hc.div(2).plus(Rsep_m);
-    let Rsep_in = Rsep_m.minus(hc.div(2));
+    let e = this.math.evaluate(`${dsh} * 0.2`);
+    let zg = this.math.evaluate(`${u} * (${i} + 1)`);
+    let zsh = i;
+    let Rin = this.math.evaluate(`${Rout} - ${e} * 2`);
+    let rsh = this.math.divide(dsh, 2);
+    let rd = this.math.chain(Rin).add(e).subtract(dsh).done();
+    let hc = this.math.evaluate(`${e} * 2.2`);
+    let Rsep_m = this.math.add(rd, rsh);
+    let Rsep_out = this.math.chain(hc).divide(2).add(Rsep_m).done();
+    let Rsep_in = this.math.evaluate(`${Rsep_m} - (${hc} / 2)`);
     return {
-      dsh: _dsh.toNumber(),
-      e: e.toNumber(),
-      hc: hc.toNumber(),
-      i: _i.toNumber(),
-      rd: rd.toNumber(),
-      Rin: Rin.toNumber(),
-      Rout: _Rout.toNumber(),
-      Rsep_in: Rsep_in.toNumber(),
-      Rsep_m: Rsep_m.toNumber(),
-      Rsep_out: Rsep_out.toNumber(),
-      zg: zg.toNumber(),
-      zsh: zsh.toNumber(),
+      dsh,
+      e,
+      hc,
+      i,
+      rd,
+      Rin,
+      Rout,
+      Rsep_in,
+      Rsep_m,
+      Rsep_out,
+      zg,
+      zsh,
     }
+  }
+
+  /**
+   * Calculates additional geometric parameters for the wave gearing mechanism.
+   *
+   * This method computes several arrays of values based on the provided parameters,
+   * including positions, angles, and distances used in the geometry of the mechanism.
+   * The calculations involve trigonometric and vector operations, and are typically
+   * used for generating the geometry of the wave generator and its associated components.
+   *
+   * @param RESOLUTION - The number of discrete steps or points for the calculation (resolution of the angle range).
+   * @param zg - The number of teeth or lobes on the generator (gear parameter).
+   * @param rsh - The radius of the shaft or base circle.
+   * @param e - The eccentricity or offset value.
+   * @param rd - The radius of the disk or outer circle.
+   * @param zsh - The number of shaft positions or holes.
+   *
+   * @remarks
+   * This method relies on several helper functions (`getS`, `getXi`, `getX_Y`) and the `math` library for vectorized operations.
+   * The results are typically used for further geometric construction or visualization.
+   */
+  public calculateAdditionalParams(
+    RESOLUTION: number,
+    zg: number,
+    rsh: number,
+    e: number,
+    rd: number,
+    zsh: number,
+  ) {
+    const theta = this.math.range(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+
+    // S = sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
+    const S = this.getS(theta, zg, e, rsh, rd);
+    // l = e * np.cos(zg * theta) + S;
+    const l = this.math
+      .chain(theta)
+      .multiply(zg)
+      .map(this.math.cos)
+      .multiply(e)
+      .add(S)
+      .done();
+    // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
+    const Xi = this.getXi(theta, zg, e, S);
+
+    // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
+    const x = this.getX_Y(theta, l, Xi, rsh, this.math.sin);
+    // y = l*np.cos(theta) + rsh * np.cos(theta + Xi);
+    const y = this.getX_Y(theta, l, Xi, rsh, this.math.cos);
+
+    // xy = np.stack((x, y), axis=1);
+    const xy = this.math.concat(x, y, 1);
+
+    // sh_angle = this.math.range(0, 1, zsh+1) * 2*np.pi;
+    const sh_angle = this.math
+      .chain(this.math.range(0, 1, zsh + 1))
+      .multiply(this.math.pi)
+      .multiply(2)
+      .done();
+    // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
+    const S_sh = this.getS(sh_angle, zg, e, rsh, rd);
+    // l_Sh = e * np.cos(zg * sh_angle) + S_sh;
+    const l_Sh = this.math
+      .chain(sh_angle)
+      .multiply(zg)
+      .map(this.math.cos)
+      .multiply(e)
+      .add(S_sh)
+      .done();
+    // x_sh = l_Sh*np.sin(sh_angle);
+    const x_sh = this.math
+      .chain(sh_angle)
+      .map(this.math.sin)
+      .multiply(l_Sh)
+      .done();
+    // y_sh = l_Sh*np.cos(sh_angle);
+    const y_sh = this.math
+      .chain(sh_angle)
+      .map(this.math.cos)
+      .multiply(l_Sh)
+      .done();
+  }
+
+  /**
+   * Calculates the result matrix based on the provided angular matrix, gear teeth count, eccentricity, shaft radius, and disk radius.
+   *
+   * @note To calculate S_sh use sh_angle instead of theta.
+   *
+   * The calculation involves:
+   * 1. Multiplying each element of the `theta` matrix by `zg`.
+   * 2. Applying the sine function to each element of the resulting matrix.
+   * 3. Multiplying each sine value by `e` and squaring the result.
+   * 4. Adding `rsh` and `rd`, squaring the sum, and subtracting the squared sine values from this.
+   * 5. Taking the square root of the result.
+   *
+   * @param theta (sh_angle) - A matrix of angular values (in radians).
+   * @param zg - The number of gear teeth.
+   * @param e - The eccentricity value.
+   * @param rsh - The shaft radius.
+   * @param rd - The disk radius.
+   * @returns The resulting matrix after performing the described calculations.
+   */
+  private getS(theta: Matrix, zg: number, e: number, rsh: number, rd: number): MathType {
+    // S = sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
+    // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
+    // Difference between S and S_sh is only `sh_angle` instead of `theta`
+    // subtrahend = (rsh + rd) ** 2
+    const subtrahend = this.math
+      .chain(rsh)
+      .add(rd)
+      .pow(2)
+      .done();
+    // subtractor = np.power(e * np.sin(zg * theta), 2)
+    const subtractor = this.math
+      .chain(theta)
+      .multiply(zg)
+      .map(this.math.sin)
+      .multiply(e)
+      .pow(2)
+      .done();
+    // sqrt(subtrahend - subtractor)
+    return this.math
+      .chain(subtrahend)
+      .subtract(subtractor)
+      .pow(0.5)
+      .done() as Matrix;
+  }
+
+  /**
+   * Calculates the Xi matrix using the arctangent of the ratio between a transformed theta matrix and S.
+   *
+   * Xi is computed as: Xi = arctan2(e * zg * sin(zg * theta), S)
+   *
+   * @param theta - The input matrix of angular values.
+   * @param zg - The gear ratio or multiplier applied to theta.
+   * @param e - The eccentricity or scaling factor applied to the result.
+   * @param S - The denominator matrix or value for the arctangent calculation.
+   * @returns The resulting Xi matrix after applying the arctangent operation.
+   */
+  private getXi(theta: Matrix, zg: number, e: number, S: MathType): Matrix {
+    // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
+    // atanArg = e*zg*np.sin(zg*theta)
+    const atanArg = this.math
+      .chain(theta)
+      .multiply(theta)
+      .map(this.math.sin)
+      .multiply(zg)
+      .multiply(e)
+      .done();
+    return this.math.atan2(atanArg, S as Matrix);
+  }
+
+  /**
+   * Calculates the X or Y coordinate based on the provided parameters using matrix operations.
+   *
+   * The calculation follows the formula:
+   *   result = l * func(theta) + rsh * func(theta + Xi)
+   *
+   * @param theta - A matrix representing the angle(s) theta.
+   * @param l - The length or scalar multiplier for the first term.
+   * @param Xi - A matrix or value to be added to theta for the second term.
+   * @param rsh - The scalar multiplier for the second term.
+   * @param func - A function to apply to the angle(s), such as Math.sin or Math.cos.
+   * @returns The computed matrix or value representing the coordinate.
+   */
+  private getX_Y(theta: Matrix, l: MathType, Xi: MathType, rsh: number, func: (value: any) => MathType) {
+    // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
+    // termA = l * np.sin(theta)
+    const termA = this.math
+      .chain(theta)
+      .map(func)
+      .multiply(l)
+      .done();
+    // termB = rsh * np.sin(theta + Xi)
+    const termB = this.math
+      .chain(theta)
+      .add(Xi as Matrix)
+      .map(func)
+      .multiply(rsh)
+      .done();
+    return this.math.add(termA, termB);
   }
 }

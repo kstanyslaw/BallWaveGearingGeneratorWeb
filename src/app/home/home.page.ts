@@ -72,7 +72,6 @@ export class HomePage {
       zg,
       zsh,
     } = this.calcService.calculateBasicParams(dsh, u, i,Rout);
-    console.log(this.paramsForm.value);
     console.log(`
 ........................
 Основные параметры ВПТК:
@@ -109,7 +108,7 @@ export class HomePage {
       formGroup[field.formControlName] = [ field.placeholder, Validators.required ];
     });
     this.inputFlags.map((flag: InputField) => {
-      formGroup[flag.formControlName] = [ flag.placeholder.toLowerCase() === 'true', Validators.required ];
+      formGroup[flag.formControlName] = [ flag.placeholder.toLowerCase() === 'true' ];
     })
     this.paramsForm = this.fb.group(formGroup);
   }
