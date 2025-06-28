@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all, Matrix, MathType, MathJsInstance } from 'mathjs'
+import { create, all, Matrix, MathType, MathJsInstance, BigNumber } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -77,6 +77,18 @@ export class CalculationService {
       zsh,
     }
   }
+
+  /**
+   * Checks the validity of basic parameters for a gearing calculation.
+   *
+   * This method verifies whether the input parameter `Rin` satisfies the condition:
+   * `Rin <= (1.03 * dsh) / sin(π / zg)`.
+   *
+   * @param Rin - The input radius or parameter to validate.
+   * @param zg - The number of gear teeth.
+   * @param dsh - The shaft diameter.
+   * @returns `true` if the parameters are valid according to the condition, otherwise `false`.
+   */
   public checkBasicParamsValidity(Rin: number | BigNumber, zg: number, dsh: number): boolean {
     // Rin <= ((1.03 * dsh)/np.sin(np.pi/zg))
     const numerator = this.math
