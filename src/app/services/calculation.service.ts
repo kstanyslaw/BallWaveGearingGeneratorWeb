@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all, Matrix, MathType, MathJsInstance, BigNumber } from 'mathjs'
+import { create, all, Matrix, MathType, MathJsInstance, BigNumber, boolean } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -89,7 +89,7 @@ export class CalculationService {
    * @param dsh - The shaft diameter.
    * @returns `true` if the parameters are valid according to the condition, otherwise `false`.
    */
-  public checkBasicParamsValidity(Rin: number | BigNumber, zg: number, dsh: number): boolean {
+  public checkBasicParamsValidity(Rin: number | BigNumber, zg: number, dsh: number): {check: boolean, value: number} {
     // Rin <= ((1.03 * dsh)/np.sin(np.pi/zg))
     const numerator = this.math
       .chain(dsh)
@@ -101,8 +101,8 @@ export class CalculationService {
       .sin()
       .done();
     const value = this.math.divide(numerator, denominator);
-    const check = this.math.smallerEq(Rin, value);
-    return check as boolean;
+    const check = this.math.smallerEq(Rin, value) as boolean;
+    return { check, value };
   }
 
   /**
