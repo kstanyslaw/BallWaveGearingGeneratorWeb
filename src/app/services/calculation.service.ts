@@ -77,6 +77,21 @@ export class CalculationService {
       zsh,
     }
   }
+  public checkBasicParamsValidity(Rin: number | BigNumber, zg: number, dsh: number): boolean {
+    // Rin <= ((1.03 * dsh)/np.sin(np.pi/zg))
+    const numerator = this.math
+      .chain(dsh)
+      .multiply(1.03)
+      .done();
+    const denominator = this.math
+      .chain(this.math.pi)
+      .divide(zg)
+      .sin()
+      .done();
+    const value = this.math.divide(numerator, denominator);
+    const check = this.math.smallerEq(Rin, value);
+    return check as boolean;
+  }
 
   /**
    * Calculates additional geometric parameters for the wave gearing mechanism.
