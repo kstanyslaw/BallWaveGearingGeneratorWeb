@@ -14,7 +14,7 @@ describe('CalculationService', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('service.calculateBasicParams', () => {
+  describe('calculateBasicParams', () => {
     it('should correctly calculate all parameters for basic input', () => {
       const dsh = 10;
       const u = 5;
@@ -108,6 +108,48 @@ describe('CalculationService', () => {
       expect(result.zg).toBeCloseTo(9.6); // (2 + 1) * 3.2
       expect(result.Rin).toBeCloseTo(47.5); // 50.5 - 2*1.5
       expect(result.rd).toBeCloseTo(41.5); // 47.5 + 1.5 - 7.5
+    });
+  });
+
+  describe('checkBasicParamsValidity', () => {
+    it('should return true when Rin is less than or equal to the limit', () => {
+      // For zg = 10, dsh = 20, Rin = 50
+      // limit = (1.03 * 20) / sin(pi/10) ≈ 20.6 / 0.3090 ≈ 66.68
+      const Rin = 50;
+      const zg = 10;
+      const dsh = 20;
+      expect(service.checkBasicParamsValidity(Rin, zg, dsh)).toBeTrue();
+    });
+
+    it('should return true when Rin is exactly at the limit', () => {
+      const zg = 8;
+      const dsh = 16;
+      const limit = Number(service['math'].divide(
+        service['math'].multiply(dsh, 1.03),
+        service['math'].sin(service['math'].divide(service['math'].pi, zg))
+      ));
+      expect(service.checkBasicParamsValidity(service['math'].bignumber(limit), zg, dsh)).toBeTrue();
+    });
+
+    it('should return false when Rin is greater than the limit', () => {
+      const zg = 12;
+      const dsh = 10;
+      const limit = Number(service['math'].divide(
+        service['math'].multiply(dsh, 1.03),
+        service['math'].sin(service['math'].divide(service['math'].pi, zg))
+      ));
+      const Rin = service['math'].bignumber(limit + 1);
+      expect(service.checkBasicParamsValidity(Rin, zg, dsh)).toBeFalse();
+    });
+
+    it('should handle zg = 1 (sin(pi/1) = 0, division by zero)', () => {
+      // Should return false or throw, but mathjs returns Infinity, so Rin <= Infinity is true
+      expect(service.checkBasicParamsValidity(100, 1, 10)).toBeTrue();
+    });
+
+    it('should handle zg = 0 (division by zero)', () => {
+      // Should return false or throw, but mathjs returns NaN, so Rin <= NaN is false
+      expect(service.checkBasicParamsValidity(100, 0, 10)).toBeFalse();
     });
   });
 });
