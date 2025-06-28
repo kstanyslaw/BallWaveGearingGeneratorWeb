@@ -88,6 +88,11 @@ export class HomePage {
 ........................
 ........................
     `);
+    const {check, value} = this.calcService.checkBasicParamsValidity(Rin, zg, dsh);
+    if (!check) {
+      console.log("Так не пойдет -_-)");
+      console.log(`Внутренний радиус впадин жесткого колеса Rin(${Rin}мм) должен быть больше: ${value.toFixed(3)}мм. Увеличьте Rout или уменьшите передаточное число ${i}!`);
+    }
   }
 
   /**
