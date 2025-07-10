@@ -47,8 +47,8 @@ export class RenderService {
         this.addEccentric(dxf, config);
       case config.BALLS:
         this.addBalls(dxf, config);
-      // case config.OUT_DIAMETER:
-      // this.addOuterDiameter(dxf, config);
+      case config.OUT_DIAMETER:
+        this.addOuterDiameter(dxf, config);
       break;
     }
 
@@ -111,5 +111,9 @@ private addEccentric(dxf: DxfWriter, config: WheelProfileConfig): void {
       const ballCenter = point3d(x_sh[i], y_sh[i]);
       dxf.addCircle(ballCenter, rsh);
     }
+  }
+
+  private addOuterDiameter(dxf: DxfWriter, config: WheelProfileConfig): void {
+    dxf.addCircle(point3d(0, 0), config.D / 2); // Maybe better do with mathjs
   }
 }
