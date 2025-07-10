@@ -31,7 +31,7 @@ export class RenderService {
 
   public generateWheelProfile(config: WheelProfileConfig, fileName: string = 'wheel_profile.dxf'): void {
     const dxf = this.createDxfDocument(config);
-    // this.saveDxfFile(dxf, fileName);
+    this.saveDxfFile(dxf, fileName);
   }
 
   private createDxfDocument(config: WheelProfileConfig): DxfWriter {
@@ -115,5 +115,26 @@ private addEccentric(dxf: DxfWriter, config: WheelProfileConfig): void {
 
   private addOuterDiameter(dxf: DxfWriter, config: WheelProfileConfig): void {
     dxf.addCircle(point3d(0, 0), config.D / 2); // Maybe better do with mathjs
+  }
+
+  private saveDxfFile(dxf: DxfWriter, fileName: string): void {
+    try {
+      // File extention autocomplete
+      const finalFileName = fileName.toLowerCase().endsWith('.dxf')
+        ? fileName
+        : `${fileName}.dxf`;
+
+      // Saving
+      const dxfString = dxf.stringify();
+      saveAs(
+        new Blob([dxfString], { type: 'application/dxf' }),
+        finalFileName
+      );
+
+      console.log(`Профиль сохранён в: ${finalFileName}`);
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      throw error;
+    }
   }
 }
