@@ -146,17 +146,18 @@ export class CalculationService {
       .map(this.math.cos)
       .multiply(e)
       .add(S)
-      .done();
+      .done() as Matrix;
     // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
     const Xi = this.getXi(theta, zg, e, S);
 
     // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
-    const x = this.getX_Y(theta, l, Xi, rsh, this.math.sin);
+    const x = this.getX_Y(theta, l, Xi, rsh, 'sin');
     // y = l*np.cos(theta) + rsh * np.cos(theta + Xi);
-    const y = this.getX_Y(theta, l, Xi, rsh, this.math.cos);
+    const y = this.getX_Y(theta, l, Xi, rsh, 'cos');
 
     // xy = np.stack((x, y), axis=1);
     const xy = this.math.concat(x, y, 1);
+    console.log('xy:', xy);
 
     // sh_angle = this.math.range(0, 1, zsh+1) * 2*np.pi;
     const sh_angle = this.math
@@ -194,7 +195,7 @@ export class CalculationService {
       Xi,
       x,
       y,
-      xy: xy.valueOf(),
+      xy,
       sh_angle,
       S_sh,
       l_Sh,
@@ -238,14 +239,14 @@ export class CalculationService {
       .multiply(zg)
       .map(this.math.sin)
       .multiply(e)
-      .pow(2)
+      .map(this.math.square)
       .done();
     // sqrt(subtrahend - subtractor)
     return this.math
-      .chain(subtrahend)
-      .subtract(subtractor)
-      .pow(0.5)
-      .done() as Matrix;
+      .chain(subtractor)
+      .map(val => this.math.subtract(subtrahend, val))
+      .map(this.math.sqrt)
+      .done();
   }
 
   /**
@@ -264,7 +265,7 @@ export class CalculationService {
     // atanArg = e*zg*np.sin(zg*theta)
     const atanArg = this.math
       .chain(theta)
-      .multiply(theta)
+      .multiply(zg)
       .map(this.math.sin)
       .multiply(zg)
       .multiply(e)
@@ -285,18 +286,16 @@ export class CalculationService {
    * @param func - A function to apply to the angle(s), such as Math.sin or Math.cos.
    * @returns The computed matrix or value representing the coordinate.
    */
-  private getX_Y(theta: Matrix, l: MathType, Xi: MathType, rsh: number, func: (value: any) => MathType) {
+  private getX_Y(theta: Matrix, l: Matrix, Xi: Matrix, rsh: number, tFuncName: 'sin' | 'cos') {
+    const func = tFuncName === 'sin' ? this.math.sin : this.math.cos;
     // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
     // termA = l * np.sin(theta)
-    const termA = this.math
-      .chain(theta)
-      .map(func)
-      .multiply(l)
-      .done();
+    const funcTheta = this.math.map(theta, func);
+    const termA = this.math.dotMultiply(l, funcTheta);
     // termB = rsh * np.sin(theta + Xi)
+    const thetaXi = this.math.add(theta, Xi);
     const termB = this.math
-      .chain(theta)
-      .add(Xi as Matrix)
+      .chain(thetaXi)
       .map(func)
       .multiply(rsh)
       .done();
