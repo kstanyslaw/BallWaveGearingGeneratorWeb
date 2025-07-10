@@ -38,7 +38,7 @@ export class RenderService {
 
     switch (true) {
       case config.BASE_WHEEL_SHAPE:
-        // this.addBaseWheelShape(dxf, config);
+        this.addBaseWheelShape(dxf, config);
       // case config.SEPARATOR:
       // this.addSeparator(dxf, config);
       // case config.ECCENTRIC:
@@ -51,6 +51,22 @@ export class RenderService {
     }
 
     return dxf;
+  }
+
+  private addBaseWheelShape(dxf: DxfWriter, config: WheelProfileConfig): void {
+    // Add center point (x, y, z)
+    dxf.addPoint(0, 0, 0);
+
+    // Add polyline
+    const vertices: LWPolylineVertex[] = config.xy.map((point) => ({ point: point2d(point[0], point[1])}));
+    dxf.addLWPolyline(vertices);
+
+    /**
+     * Commented circles (like in source)
+     * {@link https://codeberg.org/TrashRobotics/BallsWaveGearingGenerator/src/branch/main/calc_vptc.py#:~:text=%23%20msp.add_circle((0,0)%2C%20radius%3DRin) | source}
+    */
+    // dxf.addCircle(0, 0, 0, config.Rout); // (x, y, z, radius)
+    // dxf.addCircle(0, 0, 0, config.Rin);
   }
 
 }
