@@ -41,8 +41,8 @@ export class RenderService {
         this.addBaseWheelShape(dxf, config);
       case config.SEPARATOR:
         this.addSeparator(dxf, config);
-      // case config.ECCENTRIC:
-      // this.addEccentric(dxf, config);
+      case config.ECCENTRIC:
+        this.addEccentric(dxf, config);
       // case config.BALLS:
       // this.addBalls(dxf, config);
       // case config.OUT_DIAMETER:
@@ -74,5 +74,30 @@ export class RenderService {
 
     dxf.addCircle(center, config.Rsep_out);
     dxf.addCircle(center, config.Rsep_in);
+  }
+
+private addEccentric(dxf: DxfWriter, config: WheelProfileConfig): void {
+    // Eccentric point (top point)
+    dxf.addPoint(0, config.e, 0);
+
+    // Vertical line (eccentric axis)
+    dxf.addLWPolyline([
+        { point: point2d(0, 0) },
+        { point: point2d(0, config.e) }
+    ]);
+
+    // Horisontal line (base axis)
+    dxf.addLWPolyline([
+        { point: point2d(-6, 0) },
+        { point: point2d(6, 0) }
+    ]);
+
+    // Horisontal line (eccentric axis)
+    dxf.addLWPolyline([
+        { point: point2d(-3, config.e) },
+        { point: point2d(3, config.e) }
+    ]);
+
+    dxf.addCircle(point3d(0, config.e), config.rd);
   }
 }
