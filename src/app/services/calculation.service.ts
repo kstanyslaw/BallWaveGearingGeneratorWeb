@@ -75,6 +75,7 @@ export class CalculationService {
       Rsep_out,
       zg,
       zsh,
+      rsh
     }
   }
 
