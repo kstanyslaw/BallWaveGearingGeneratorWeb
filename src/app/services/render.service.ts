@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DxfWriter, point2d, LWPolylineVertex } from '@tarikjabiri/dxf';
+import { DxfWriter, point2d, LWPolylineVertex, point3d } from '@tarikjabiri/dxf';
 import { saveAs } from 'file-saver';
 
 interface WheelProfileConfig {
@@ -39,8 +39,8 @@ export class RenderService {
     switch (true) {
       case config.BASE_WHEEL_SHAPE:
         this.addBaseWheelShape(dxf, config);
-      // case config.SEPARATOR:
-      // this.addSeparator(dxf, config);
+      case config.SEPARATOR:
+        this.addSeparator(dxf, config);
       // case config.ECCENTRIC:
       // this.addEccentric(dxf, config);
       // case config.BALLS:
@@ -69,4 +69,10 @@ export class RenderService {
     // dxf.addCircle(0, 0, 0, config.Rin);
   }
 
+  private addSeparator(dxf: DxfWriter, config: WheelProfileConfig): void {
+    const center = point3d(0, 0);
+
+    dxf.addCircle(center, config.Rsep_out);
+    dxf.addCircle(center, config.Rsep_in);
+  }
 }
