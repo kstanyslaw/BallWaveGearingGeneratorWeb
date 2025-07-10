@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { DxfWriter, point2d, LWPolylineVertex } from '@tarikjabiri/dxf';
+import { saveAs } from 'file-saver';
 
 interface WheelProfileConfig {
   BASE_WHEEL_SHAPE: boolean;
@@ -24,5 +26,10 @@ interface WheelProfileConfig {
 export class RenderService {
 
   constructor() {}
+
+  public generateWheelProfile(config: WheelProfileConfig, fileName: string = 'wheel_profile.dxf'): void {
+    // const dxf = this.createDxfDocument(config);
+    // this.saveDxfFile(dxf, fileName);
+  }
 
 }
