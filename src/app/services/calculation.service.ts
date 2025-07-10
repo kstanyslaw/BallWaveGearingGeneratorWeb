@@ -184,6 +184,21 @@ export class CalculationService {
       .map(this.math.cos)
       .multiply(l_Sh)
       .done();
+
+    return {
+      theta,
+      S,
+      l,
+      Xi,
+      x,
+      y,
+      xy: xy.valueOf(),
+      sh_angle,
+      S_sh,
+      l_Sh,
+      x_sh,
+      y_sh
+    };
   }
 
   /**
