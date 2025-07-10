@@ -307,7 +307,20 @@ export class CalculationService {
     if (count < 2) {
         return [start];
     }
-    const step = (end - start) / (count - 1);
-    return Array.from({ length: count }, (_, i) => start + step * i);
+    const step = this.math
+      .chain(end)
+      .subtract(start)
+      .divide(
+        this.math.subtract(count, 1)
+      )
+      .done();
+
+    return Array.from({ length: count }, (_, i) =>
+      this.math
+        .chain(step)
+        .multiply(i)
+        .add(start)
+        .done()
+    );
   }
 }
