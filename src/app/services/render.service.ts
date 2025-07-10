@@ -17,6 +17,8 @@ interface WheelProfileConfig {
   rd: number;
   zsh: number;
   rsh: number;
+  x_sh: number[];
+  y_sh: number[];
   D: number;
 }
 
@@ -43,8 +45,8 @@ export class RenderService {
         this.addSeparator(dxf, config);
       case config.ECCENTRIC:
         this.addEccentric(dxf, config);
-      // case config.BALLS:
-      // this.addBalls(dxf, config);
+      case config.BALLS:
+        this.addBalls(dxf, config);
       // case config.OUT_DIAMETER:
       // this.addOuterDiameter(dxf, config);
       break;
@@ -99,5 +101,15 @@ private addEccentric(dxf: DxfWriter, config: WheelProfileConfig): void {
     ]);
 
     dxf.addCircle(point3d(0, config.e), config.rd);
+  }
+
+  private addBalls(dxf: DxfWriter, config: WheelProfileConfig): void {
+    // Memory optimization for a big number of balls
+    const { zsh, x_sh, y_sh, rsh } = config;
+
+    for (let i = 0; i < zsh; i++) {
+      const ballCenter = point3d(x_sh[i], y_sh[i]);
+      dxf.addCircle(ballCenter, rsh);
+    }
   }
 }
