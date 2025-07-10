@@ -133,7 +133,9 @@ export class CalculationService {
     rd: number,
     zsh: number,
   ) {
-    const theta = this.math.range(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+    const thetaArray = this.linspace(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+    // const theta = this.math.range(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+    const theta = this.math.matrix(thetaArray);
 
     // S = sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
     const S = this.getS(theta, zg, e, rsh, rd);
@@ -299,5 +301,13 @@ export class CalculationService {
       .multiply(rsh)
       .done();
     return this.math.add(termA, termB);
+  }
+
+  private linspace(start: number, end: number, count: number): number[] {
+    if (count < 2) {
+        return [start];
+    }
+    const step = (end - start) / (count - 1);
+    return Array.from({ length: count }, (_, i) => start + step * i);
   }
 }
