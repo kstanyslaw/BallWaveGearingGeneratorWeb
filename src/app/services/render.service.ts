@@ -38,18 +38,20 @@ export class RenderService {
     const dxf = new DxfWriter();
     dxf.setVariable('$ACADVER', 'AC1015');
 
-    switch (true) {
-      case config.BASE_WHEEL_SHAPE:
-        this.addBaseWheelShape(dxf, config);
-      case config.SEPARATOR:
-        this.addSeparator(dxf, config);
-      case config.ECCENTRIC:
-        this.addEccentric(dxf, config);
-      case config.BALLS:
-        this.addBalls(dxf, config);
-      case config.OUT_DIAMETER:
-        this.addOuterDiameter(dxf, config);
-      break;
+    if (config.BASE_WHEEL_SHAPE) {
+      this.addBaseWheelShape(dxf, config);
+    }
+    if (config.SEPARATOR) {
+      this.addSeparator(dxf, config);
+    }
+    if (config.ECCENTRIC) {
+      this.addEccentric(dxf, config);
+    }
+    if (config.BALLS) {
+      this.addBalls(dxf, config);
+    }
+    if (config.OUT_DIAMETER) {
+      this.addOuterDiameter(dxf, config);
     }
 
     return dxf;
