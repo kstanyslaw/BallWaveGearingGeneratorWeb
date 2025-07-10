@@ -4,6 +4,7 @@ import { InputDataService } from '../services/input-data.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { InputField } from '../interfaces/input-field';
 import { CalculationService } from '../services/calculation.service';
+import { RenderService } from '../services/render.service';
 
 @Component({
   selector: 'app-home',
@@ -14,6 +15,7 @@ import { CalculationService } from '../services/calculation.service';
 export class HomePage {
   private inputDataService = inject(InputDataService);
   private calcService = inject(CalculationService);
+  private renderService = inject(RenderService);
   paramsForm!: FormGroup;
   inputFields!: InputField[];
   inputFlags!: InputField[];
@@ -95,6 +97,34 @@ export class HomePage {
     if (check) {
       console.log("Так не пойдет -_-)");
       console.log(`Внутренний радиус впадин жесткого колеса Rin(${Rin}мм) должен быть больше: ${value.toFixed(3)}мм. Увеличьте Rout или уменьшите передаточное число ${i}!`);
+    } else {
+      const { xy, x_sh, y_sh } = this.calcService.calculateAdditionalParams(
+        RESOLUTION,
+        zg,
+        rsh,
+        e,
+        rd,
+        zsh
+      );
+      // this.renderService.generateWheelProfile({
+      //   BASE_WHEEL_SHAPE,
+      //   SEPARATOR,
+      //   ECCENTRIC,
+      //   BALLS,
+      //   OUT_DIAMETER,
+      //   xy,
+      //   Rout,
+      //   Rin,
+      //   Rsep_out,
+      //   Rsep_in,
+      //   e,
+      //   rd,
+      //   zsh,
+      //   rsh,
+      //   x_sh,
+      //   y_sh,
+      //   D
+      // });
     }
   }
 
