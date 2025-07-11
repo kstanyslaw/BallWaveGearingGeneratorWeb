@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all, Matrix, MathType, MathJsInstance, BigNumber, boolean } from 'mathjs'
+import { create, all, Matrix, MathType, MathJsInstance, BigNumber, boolean, subset } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -156,8 +156,7 @@ export class CalculationService {
     const y = this.getX_Y(theta, l, Xi, rsh, 'cos');
 
     // xy = np.stack((x, y), axis=1);
-    const xy = this.math.concat(x, y, 1);
-    console.log('xy:', xy);
+    const xy = this.stack(x, y);
 
     // sh_angle = this.math.range(0, 1, zsh+1) * 2*np.pi;
     const sh_angle = this.math
@@ -321,5 +320,19 @@ export class CalculationService {
         .add(start)
         .done()
     );
+  }
+
+  private stack(x: Matrix, y: Matrix): Matrix {
+    const xSize = x.size();
+    const ySize = y.size();
+    if(xSize.length !== ySize.length) {
+      throw new Error('IndexError: size of X and Y should be the same while stack!');
+    }
+    const length = xSize[0] > ySize[0] ? xSize[0] : ySize[0];
+    const resultArr = [];
+    for(let i = 0; i < length; i++) {
+      resultArr.push([ x.get([i]) ?? 0, y.get([i]) ?? 0 ]);
+    }
+    return this.math.matrix(resultArr);
   }
 }
