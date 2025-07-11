@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all, Matrix, MathType, MathJsInstance, BigNumber, boolean, subset } from 'mathjs'
+import { create, all, Matrix, MathType, MathJsInstance, BigNumber, bignumber } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -158,9 +158,11 @@ export class CalculationService {
     // xy = np.stack((x, y), axis=1);
     const xy = this.stack(x, y);
 
-    // sh_angle = this.math.range(0, 1, zsh+1) * 2*np.pi;
+    // sh_angle = np.linspace(0, 1, zsh+1) * 2*np.pi
+    const sh_angleLN = this.linspace(0, 1, +this.math.add(zsh, 1).toFixed(0));
+    const sh_angleMx = this.math.matrix(sh_angleLN).map(bignumber);
     const sh_angle = this.math
-      .chain(this.math.range(0, 1, zsh + 1))
+      .chain(sh_angleMx)
       .multiply(this.math.pi)
       .multiply(2)
       .done();
@@ -301,7 +303,7 @@ export class CalculationService {
     return this.math.add(termA, termB);
   }
 
-  private linspace(start: number, end: number, count: number): number[] {
+  private linspace(start: number, end: number, count: number): number[] | BigNumber[] {
     if (count < 2) {
         return [start];
     }
