@@ -166,6 +166,7 @@ export class CalculationService {
       .multiply(this.math.pi)
       .multiply(2)
       .done();
+
     // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
     const S_sh = this.getS(sh_angle, zg, e, rsh, rd);
     // l_Sh = e * np.cos(zg * sh_angle) + S_sh;
@@ -180,13 +181,13 @@ export class CalculationService {
     const x_sh = this.math
       .chain(sh_angle)
       .map(this.math.sin)
-      .multiply(l_Sh)
+      .dotMultiply(l_Sh)
       .done();
     // y_sh = l_Sh*np.cos(sh_angle);
     const y_sh = this.math
       .chain(sh_angle)
       .map(this.math.cos)
-      .multiply(l_Sh)
+      .dotMultiply(l_Sh)
       .done();
 
     return {
