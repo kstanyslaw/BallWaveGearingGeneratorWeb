@@ -63,8 +63,6 @@ print("- Толщина сепаратора (hc): ", hc)
 print("........................")
 print("........................")
 
-print(" === Rin {0}, {1}!".format(Rin, (1.03 * dsh)/np.sin(np.pi/zg)))
-
 if Rin <= ((1.03 * dsh)/np.sin(np.pi/zg)):
     print("Так не пойдет -_-)")
     print("Внутренний радиус впадин жесткого колеса Rin({0}мм) должен быть больше: {1}мм. Увеличьте Rout или уменьшите "
@@ -124,7 +122,7 @@ doc.saveas(OUT_FILE)
 print("Профиль построен и записа в файл:", OUT_FILE)
 
 # Дополнительная визуализация результата в matplotlib
-if True:
+if False:
     fig, ax = plt.subplots(figsize=(8, 8))
 
     ax.plot(x, y, linewidth=1.0)
