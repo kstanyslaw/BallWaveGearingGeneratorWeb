@@ -60,6 +60,7 @@ export class HomePage {
       BALLS,
       OUT_DIAMETER
     } = this.paramsForm.value;
+
     const {
       // dsh,
       e,
@@ -76,22 +77,7 @@ export class HomePage {
       rsh,
     } = this.calcService.calculateBasicParams(dsh, u, i,Rout);
 
-    console.log(`
-........................
-Основные параметры ВПТК:
-- Передаточное число (i): ${i}
-- Эксцентриситет (e): ${e}
-- Радиус эксцентрика (rd): ${rd}
-- Внешний радиус профиля жесткого колеса (Rout): ${Rout}
-- Внутренний радиус профиля жесткого колеса (Rin): ${Rin}
-- Число впадин профиля жесткого колеса (zg): ${zg}
-- Число шариков (zsh): ${zsh}
-- Диаметр шариков (dsh): ${dsh}
-- Делительный радиус сепаратора (Rsep_m): ${Rsep_m}
-- Толщина сепаратора (hc): ${hc}
-........................
-........................
-    `);
+    this.logBasicParams(i, e, rd, Rout, Rin, zg, zsh, dsh, Rsep_m, hc);
 
     const {check, value} = this.calcService.checkBasicParamsValidity(Rin, zg, dsh);
     if (check) {
@@ -106,6 +92,8 @@ export class HomePage {
         rd,
         zsh
       );
+      console.log(xy);
+      console.log(x_sh);
       // this.renderService.generateWheelProfile({
       //   BASE_WHEEL_SHAPE,
       //   SEPARATOR,
@@ -126,6 +114,39 @@ export class HomePage {
       //   D
       // });
     }
+  }
+
+  /**
+   * Logs the basic parameters of the ВПТК (Ball Wave Gearing) to the console in a formatted manner (like in the original app).
+   *
+   * @param i - Передаточное число (Transmission ratio)
+   * @param e - Эксцентриситет (Eccentricity)
+   * @param rd - Радиус эксцентрика (Radius of the eccentric)
+   * @param Rout - Внешний радиус профиля жесткого колеса (Outer radius of the rigid wheel profile)
+   * @param Rin - Внутренний радиус профиля жесткого колеса (Inner radius of the rigid wheel profile)
+   * @param zg - Число впадин профиля жесткого колеса (Number of profile depressions of the rigid wheel)
+   * @param zsh - Число шариков (Number of balls)
+   * @param dsh - Диаметр шариков (Diameter of balls)
+   * @param Rsep_m - Делительный радиус сепаратора (Pitch radius of the separator)
+   * @param hc - Толщина сепаратора (Thickness of the separator)
+   */
+  private logBasicParams(i: any, e: number, rd: number, Rout: any, Rin: number, zg: number, zsh: number, dsh: any, Rsep_m: number, hc: number) {
+    console.log(`
+........................
+Основные параметры ВПТК:
+- Передаточное число (i): ${i}
+- Эксцентриситет (e): ${e}
+- Радиус эксцентрика (rd): ${rd}
+- Внешний радиус профиля жесткого колеса (Rout): ${Rout}
+- Внутренний радиус профиля жесткого колеса (Rin): ${Rin}
+- Число впадин профиля жесткого колеса (zg): ${zg}
+- Число шариков (zsh): ${zsh}
+- Диаметр шариков (dsh): ${dsh}
+- Делительный радиус сепаратора (Rsep_m): ${Rsep_m}
+- Толщина сепаратора (hc): ${hc}
+........................
+........................
+    `);
   }
 
   /**
@@ -165,7 +186,7 @@ export class HomePage {
     }
     return control as FormControl;
   }
-
+  // Show/hide additional blueprint flags
   toggleFlags() {
     this.showFlags = !this.showFlags;
   }

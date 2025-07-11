@@ -206,6 +206,10 @@ export class CalculationService {
     };
   }
 
+  public convertMatrixToArray(m: Matrix) {
+    return
+  }
+
   /**
    * Calculates the result matrix based on the provided angular matrix, gear teeth count, eccentricity, shaft radius, and disk radius.
    *
