@@ -92,27 +92,26 @@ export class HomePage {
         rd,
         zsh
       );
-      console.log(xy);
-      console.log(x_sh);
-      // this.renderService.generateWheelProfile({
-      //   BASE_WHEEL_SHAPE,
-      //   SEPARATOR,
-      //   ECCENTRIC,
-      //   BALLS,
-      //   OUT_DIAMETER,
-      //   xy,
-      //   Rout,
-      //   Rin,
-      //   Rsep_out,
-      //   Rsep_in,
-      //   e,
-      //   rd,
-      //   zsh,
-      //   rsh,
-      //   x_sh,
-      //   y_sh,
-      //   D
-      // });
+      this.calcService.convertMatrixToArray(xy);
+      this.renderService.generateWheelProfile({
+        BASE_WHEEL_SHAPE,
+        SEPARATOR,
+        ECCENTRIC,
+        BALLS,
+        OUT_DIAMETER,
+        xy: this.calcService.convertMatrixToArray(xy) as [number, number][],
+        Rout,
+        Rin,
+        Rsep_out,
+        Rsep_in,
+        e,
+        rd,
+        zsh,
+        rsh,
+        x_sh: this.calcService.convertMatrixToArray(x_sh),
+        y_sh: this.calcService.convertMatrixToArray(y_sh),
+        D
+      }, OUT_FILE);
     }
   }
 

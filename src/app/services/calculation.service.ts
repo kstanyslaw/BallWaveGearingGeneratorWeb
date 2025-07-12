@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all, Matrix, MathType, MathJsInstance, BigNumber, bignumber } from 'mathjs'
+import { create, all, Matrix, MathType, MathJsInstance, BigNumber, bignumber, typeOf } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -207,7 +207,36 @@ export class CalculationService {
   }
 
   public convertMatrixToArray(m: Matrix) {
-    return
+    const arr = m.toArray();
+    return this.convertDecimalToNumberInArray(arr);
+  }
+
+  private convertDecimalToNumberInArray(
+    arr: Array<any>,
+    precision = 6
+  ): Array<number> | Array<any> {
+    return arr.map(el => {
+      const type = typeOf(el);
+      switch (type) {
+        case 'Array':
+          return this.convertDecimalToNumberInArray(el);
+
+        case 'BigNumber':
+        case 'Fraction':
+          return parseFloat(el.toFixed(precision));
+
+        case 'number':
+          return el;
+
+        default:
+          try {
+            const elInNUmber = parseFloat(el);
+            return elInNUmber;
+          } catch (error) {
+            throw error;
+          }
+      }
+    });
   }
 
   /**
