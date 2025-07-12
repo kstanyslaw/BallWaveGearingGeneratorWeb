@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
-import { create, all, Matrix, MathType, MathJsInstance, BigNumber, boolean } from 'mathjs'
+import { create, all, Matrix, MathType, MathJsInstance, BigNumber, bignumber, typeOf } from 'mathjs'
 
 @Injectable({
   providedIn: 'root'
@@ -75,6 +75,7 @@ export class CalculationService {
       Rsep_out,
       zg,
       zsh,
+      rsh
     }
   }
 
@@ -132,7 +133,9 @@ export class CalculationService {
     rd: number,
     zsh: number,
   ) {
-    const theta = this.math.range(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+    const thetaArray = this.linspace(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+    // const theta = this.math.range(0, this.math.multiply(2, this.math.pi), RESOLUTION);
+    const theta = this.math.matrix(thetaArray);
 
     // S = sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
     const S = this.getS(theta, zg, e, rsh, rd);
@@ -143,24 +146,27 @@ export class CalculationService {
       .map(this.math.cos)
       .multiply(e)
       .add(S)
-      .done();
+      .done() as Matrix;
     // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
     const Xi = this.getXi(theta, zg, e, S);
 
     // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
-    const x = this.getX_Y(theta, l, Xi, rsh, this.math.sin);
+    const x = this.getX_Y(theta, l, Xi, rsh, 'sin');
     // y = l*np.cos(theta) + rsh * np.cos(theta + Xi);
-    const y = this.getX_Y(theta, l, Xi, rsh, this.math.cos);
+    const y = this.getX_Y(theta, l, Xi, rsh, 'cos');
 
     // xy = np.stack((x, y), axis=1);
-    const xy = this.math.concat(x, y, 1);
+    const xy = this.stack(x, y);
 
-    // sh_angle = this.math.range(0, 1, zsh+1) * 2*np.pi;
+    // sh_angle = np.linspace(0, 1, zsh+1) * 2*np.pi
+    const sh_angleLN = this.linspace(0, 1, +this.math.add(zsh, 1).toFixed(0));
+    const sh_angleMx = this.math.matrix(sh_angleLN).map(bignumber);
     const sh_angle = this.math
-      .chain(this.math.range(0, 1, zsh + 1))
+      .chain(sh_angleMx)
       .multiply(this.math.pi)
       .multiply(2)
       .done();
+
     // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
     const S_sh = this.getS(sh_angle, zg, e, rsh, rd);
     // l_Sh = e * np.cos(zg * sh_angle) + S_sh;
@@ -175,14 +181,62 @@ export class CalculationService {
     const x_sh = this.math
       .chain(sh_angle)
       .map(this.math.sin)
-      .multiply(l_Sh)
+      .dotMultiply(l_Sh)
       .done();
     // y_sh = l_Sh*np.cos(sh_angle);
     const y_sh = this.math
       .chain(sh_angle)
       .map(this.math.cos)
-      .multiply(l_Sh)
+      .dotMultiply(l_Sh)
       .done();
+
+    return {
+      theta,
+      S,
+      l,
+      Xi,
+      x,
+      y,
+      xy,
+      sh_angle,
+      S_sh,
+      l_Sh,
+      x_sh,
+      y_sh
+    };
+  }
+
+  public convertMatrixToArray(m: Matrix) {
+    const arr = m.toArray();
+    return this.convertDecimalToNumberInArray(arr);
+  }
+
+  private convertDecimalToNumberInArray(
+    arr: Array<any>,
+    precision = 6
+  ): Array<number> | Array<any> {
+    return arr.map(el => {
+      const type = typeOf(el);
+      switch (type) {
+        case 'Array':
+          return this.convertDecimalToNumberInArray(el);
+
+        case 'BigNumber':
+        case 'Fraction':
+          return parseFloat(el.toFixed(precision));
+
+        case 'number':
+          return el;
+
+        default:
+          try {
+            const elInNUmber = parseFloat(el);
+            return elInNUmber;
+          } catch (error) {
+            throw error;
+          }
+      }
+    });
   }
 
   /**
@@ -220,14 +274,14 @@ export class CalculationService {
       .multiply(zg)
       .map(this.math.sin)
       .multiply(e)
-      .pow(2)
+      .map(this.math.square)
       .done();
     // sqrt(subtrahend - subtractor)
     return this.math
-      .chain(subtrahend)
-      .subtract(subtractor)
-      .pow(0.5)
-      .done() as Matrix;
+      .chain(subtractor)
+      .map(val => this.math.subtract(subtrahend, val))
+      .map(this.math.sqrt)
+      .done();
   }
 
   /**
@@ -246,7 +300,7 @@ export class CalculationService {
     // atanArg = e*zg*np.sin(zg*theta)
     const atanArg = this.math
       .chain(theta)
-      .multiply(theta)
+      .multiply(zg)
       .map(this.math.sin)
       .multiply(zg)
       .multiply(e)
@@ -267,21 +321,54 @@ export class CalculationService {
    * @param func - A function to apply to the angle(s), such as Math.sin or Math.cos.
    * @returns The computed matrix or value representing the coordinate.
    */
-  private getX_Y(theta: Matrix, l: MathType, Xi: MathType, rsh: number, func: (value: any) => MathType) {
+  private getX_Y(theta: Matrix, l: Matrix, Xi: Matrix, rsh: number, tFuncName: 'sin' | 'cos') {
+    const func = tFuncName === 'sin' ? this.math.sin : this.math.cos;
     // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
     // termA = l * np.sin(theta)
-    const termA = this.math
-      .chain(theta)
-      .map(func)
-      .multiply(l)
-      .done();
+    const funcTheta = this.math.map(theta, func);
+    const termA = this.math.dotMultiply(l, funcTheta);
     // termB = rsh * np.sin(theta + Xi)
+    const thetaXi = this.math.add(theta, Xi);
     const termB = this.math
-      .chain(theta)
-      .add(Xi as Matrix)
+      .chain(thetaXi)
       .map(func)
       .multiply(rsh)
       .done();
     return this.math.add(termA, termB);
+  }
+
+  private linspace(start: number, end: number, count: number): number[] | BigNumber[] {
+    if (count < 2) {
+        return [start];
+    }
+    const step = this.math
+      .chain(end)
+      .subtract(start)
+      .divide(
+        this.math.subtract(count, 1)
+      )
+      .done();
+
+    return Array.from({ length: count }, (_, i) =>
+      this.math
+        .chain(step)
+        .multiply(i)
+        .add(start)
+        .done()
+    );
+  }
+
+  private stack(x: Matrix, y: Matrix): Matrix {
+    const xSize = x.size();
+    const ySize = y.size();
+    if(xSize.length !== ySize.length) {
+      throw new Error('IndexError: size of X and Y should be the same while stack!');
+    }
+    const length = xSize[0] > ySize[0] ? xSize[0] : ySize[0];
+    const resultArr = [];
+    for(let i = 0; i < length; i++) {
+      resultArr.push([ x.get([i]) ?? 0, y.get([i]) ?? 0 ]);
+    }
+    return this.math.matrix(resultArr);
   }
 }

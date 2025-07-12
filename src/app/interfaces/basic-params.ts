@@ -6,6 +6,7 @@ export interface BasicParams {
   Rin: number;
   zg: number;
   zsh: number;
+  rsh: number;
   dsh: number;
   hc: number;
   Rsep_m: number;

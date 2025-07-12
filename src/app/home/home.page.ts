@@ -4,6 +4,7 @@ import { InputDataService } from '../services/input-data.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { InputField } from '../interfaces/input-field';
 import { CalculationService } from '../services/calculation.service';
+import { RenderService } from '../services/render.service';
 
 @Component({
   selector: 'app-home',
@@ -14,6 +15,7 @@ import { CalculationService } from '../services/calculation.service';
 export class HomePage {
   private inputDataService = inject(InputDataService);
   private calcService = inject(CalculationService);
+  private renderService = inject(RenderService);
   paramsForm!: FormGroup;
   inputFields!: InputField[];
   inputFlags!: InputField[];
@@ -58,6 +60,7 @@ export class HomePage {
       BALLS,
       OUT_DIAMETER
     } = this.paramsForm.value;
+
     const {
       // dsh,
       e,
@@ -71,28 +74,78 @@ export class HomePage {
       Rsep_out,
       zg,
       zsh,
+      rsh,
     } = this.calcService.calculateBasicParams(dsh, u, i,Rout);
+
+    this.logBasicParams(i, e, rd, Rout, Rin, zg, zsh, dsh, Rsep_m, hc);
+
+    const {check, value} = this.calcService.checkBasicParamsValidity(Rin, zg, dsh);
+    if (check) {
+      console.log("Так не пойдет -_-)");
+      console.log(`Внутренний радиус впадин жесткого колеса Rin(${Rin}мм) должен быть больше: ${value.toFixed(3)}мм. Увеличьте Rout или уменьшите передаточное число ${i}!`);
+    } else {
+      const { xy, x_sh, y_sh } = this.calcService.calculateAdditionalParams(
+        RESOLUTION,
+        zg,
+        rsh,
+        e,
+        rd,
+        zsh
+      );
+      this.calcService.convertMatrixToArray(xy);
+      this.renderService.generateWheelProfile({
+        BASE_WHEEL_SHAPE,
+        SEPARATOR,
+        ECCENTRIC,
+        BALLS,
+        OUT_DIAMETER,
+        xy: this.calcService.convertMatrixToArray(xy) as [number, number][],
+        Rout,
+        Rin,
+        Rsep_out,
+        Rsep_in,
+        e,
+        rd,
+        zsh,
+        rsh,
+        x_sh: this.calcService.convertMatrixToArray(x_sh),
+        y_sh: this.calcService.convertMatrixToArray(y_sh),
+        D
+      }, OUT_FILE);
+    }
+  }
+
+  /**
+   * Logs the basic parameters of the ВПТК (Ball Wave Gearing) to the console in a formatted manner (like in the original app).
+   *
+   * @param i - Передаточное число (Transmission ratio)
+   * @param e - Эксцентриситет (Eccentricity)
+   * @param rd - Радиус эксцентрика (Radius of the eccentric)
+   * @param Rout - Внешний радиус профиля жесткого колеса (Outer radius of the rigid wheel profile)
+   * @param Rin - Внутренний радиус профиля жесткого колеса (Inner radius of the rigid wheel profile)
+   * @param zg - Число впадин профиля жесткого колеса (Number of profile depressions of the rigid wheel)
+   * @param zsh - Число шариков (Number of balls)
+   * @param dsh - Диаметр шариков (Diameter of balls)
+   * @param Rsep_m - Делительный радиус сепаратора (Pitch radius of the separator)
+   * @param hc - Толщина сепаратора (Thickness of the separator)
+   */
+  private logBasicParams(i: any, e: number, rd: number, Rout: any, Rin: number, zg: number, zsh: number, dsh: any, Rsep_m: number, hc: number) {
     console.log(`
 ........................
 Основные параметры ВПТК:
-- Передаточное число: ", ${i})
-- Эксцентриситет: ", ${e})
-- Радиус эксцентрика: ", ${rd})
-- Внешний радиус профиля жесткого колеса: ", ${Rout})
-- Внутренний радиус профиля жесткого колеса: ", ${Rin})
-- Число впадин профиля жесткого колеса: ", ${zg})
-- Число шариков: ", ${zsh})
-- Диаметр шариков: ", ${dsh})
-- Делительный радиус сепаратора: ", ${Rsep_m})
-- Толщина сепаратора: ", ${hc})
+- Передаточное число (i): ${i}
+- Эксцентриситет (e): ${e}
+- Радиус эксцентрика (rd): ${rd}
+- Внешний радиус профиля жесткого колеса (Rout): ${Rout}
+- Внутренний радиус профиля жесткого колеса (Rin): ${Rin}
+- Число впадин профиля жесткого колеса (zg): ${zg}
+- Число шариков (zsh): ${zsh}
+- Диаметр шариков (dsh): ${dsh}
+- Делительный радиус сепаратора (Rsep_m): ${Rsep_m}
+- Толщина сепаратора (hc): ${hc}
 ........................
 ........................
     `);
-    const {check, value} = this.calcService.checkBasicParamsValidity(Rin, zg, dsh);
-    if (!check) {
-      console.log("Так не пойдет -_-)");
-      console.log(`Внутренний радиус впадин жесткого колеса Rin(${Rin}мм) должен быть больше: ${value.toFixed(3)}мм. Увеличьте Rout или уменьшите передаточное число ${i}!`);
-    }
   }
 
   /**
@@ -132,7 +185,7 @@ export class HomePage {
     }
     return control as FormControl;
   }
-
+  // Show/hide additional blueprint flags
   toggleFlags() {
     this.showFlags = !this.showFlags;
   }

@@ -1,0 +1,8 @@
+services:
+  wave-reducer-calculator:
+    build: .
+    volumes:
+      - ./output:/app/output  # Монтируем папку для сохранения результатов
+    environment:
+      - DISPLAY=$DISPLAY  # Передаем переменную DISPLAY для отображения графиков
+    tty: true  # Для интерактивного режима
