@@ -5,6 +5,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { InputField } from '../interfaces/input-field';
 import { CalculationService } from '../services/calculation.service';
 import { RenderService } from '../services/render.service';
+import { AlertService } from '../common/components/alert/alert.service';
 
 @Component({
   selector: 'app-home',
@@ -16,6 +17,7 @@ export class HomePage {
   private inputDataService = inject(InputDataService);
   private calcService = inject(CalculationService);
   private renderService = inject(RenderService);
+  private alertService = inject(AlertService);
   paramsForm!: FormGroup;
   inputFields!: InputField[];
   inputFlags!: InputField[];
@@ -81,8 +83,12 @@ export class HomePage {
 
     const {check, value} = this.calcService.checkBasicParamsValidity(Rin, zg, dsh);
     if (check) {
-      console.log("Так не пойдет -_-)");
-      console.log(`Внутренний радиус впадин жесткого колеса Rin(${Rin}мм) должен быть больше: ${value.toFixed(3)}мм. Увеличьте Rout или уменьшите передаточное число ${i}!`);
+      const header = 'Неподходящие параметры'
+      const subHeader = "Так не пойдет -_-)";
+      const message = `Внутренний радиус впадин жесткого колеса Rin(${Rin}мм) должен быть больше: ${value.toFixed(3)}мм. Увеличьте Rout или уменьшите передаточное число ${i}!`;
+      this.alertService.showAlert(message, header, subHeader);
+      console.log(subHeader);
+      console.log(message);
     } else {
       const { xy, x_sh, y_sh } = this.calcService.calculateAdditionalParams(
         RESOLUTION,
