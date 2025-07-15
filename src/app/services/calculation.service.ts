@@ -1,15 +1,118 @@
 import { Injectable } from '@angular/core';
 import { BasicParams } from '../interfaces/basic-params';
 import { create, all, Matrix, MathType, MathJsInstance, BigNumber, bignumber, typeOf } from 'mathjs'
+import { Observable, ReplaySubject, Subject } from 'rxjs';
+import {getL, getL_Sh, getS, getSh_angle, getSh_angleLN, getSh_angleMx, getTheta, getX_sh, getX_Y, getXi, getY_sh, linspace, math, stack} from 'src/app/common/utils/math-utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CalculationService {
   private math: MathJsInstance;
+  private worker: Worker | null = null;
+  private progressSubject = new Subject<any>();
+  private resultSubject = new ReplaySubject<any>(1);
+  private currentTaskId: string | null = null;
 
   constructor() {
-    this.math = create(all, { number: 'BigNumber' });
+    this.math = math;
+
+     if (typeof Worker !== 'undefined') {
+      this.worker = new Worker(
+        new URL('./calculation.worker', import.meta.url),
+        { type: 'module', name: 'calculation-worker' }
+      );
+
+      this.worker.onmessage = ({ data }) => {
+        switch (data.type) {
+          case 'PROGRESS_UPDATE':
+            this.progressSubject.next(data);
+            break;
+          case 'CALCULATION_COMPLETE':
+            this.resultSubject.next(data.result);
+            this.cleanup();
+            break;
+          case 'CALCULATION_ABORTED':
+            this.resultSubject.error('Вычисления прерваны');
+            this.cleanup();
+            break;
+          case 'CALCULATION_ERROR':
+            this.resultSubject.error(data.error);
+            this.cleanup();
+            break;
+        }
+      };
+    }
+  }
+
+
+  /**
+   * Start calculation with progress and abort hadling
+   */
+  public calculateWithProgress(
+    RESOLUTION: number,
+    zg: number,
+    rsh: number,
+    e: number,
+    rd: number,
+    zsh: number
+  ): { progress$: Observable<any>, result$: Observable<any> } {
+
+    // Abort previous calculation
+    if (this.currentTaskId) {
+      this.abortCalculation();
+    }
+
+    this.currentTaskId = this.generateTaskId();
+
+    if (this.worker) {
+      // Start in worker
+      this.worker.postMessage({
+        type: 'START_CALCULATION',
+        taskId: this.currentTaskId,
+        RESOLUTION,
+        params: { zg, rsh, e, rd, zsh }
+      });
+    } else {
+      // Fallback: execute in main flow
+      setTimeout(() => {
+        try {
+          const result = this.calculateAdditionalParams(
+            RESOLUTION, zg, rsh, e, rd, zsh
+          );
+          this.progressSubject.next({ progress: 100, stage: 'COMPLETE' });
+          this.resultSubject.next(result);
+        } catch (error) {
+          this.resultSubject.error(error instanceof Error ? error.message : String(error));
+        }
+      });
+    }
+
+    return {
+      progress$: this.progressSubject.asObservable(),
+      result$: this.resultSubject.asObservable()
+    };
+  }
+
+  /**
+   * Abort current calculation
+   */
+  public abortCalculation() {
+    if (this.worker && this.currentTaskId) {
+      this.worker.postMessage({
+        type: 'ABORT_CALCULATION',
+        taskId: this.currentTaskId
+      });
+    }
+    this.cleanup();
+  }
+
+  private generateTaskId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+  }
+
+  private cleanup() {
+    this.currentTaskId = null;
   }
 
   /**
@@ -133,62 +236,36 @@ export class CalculationService {
     rd: number,
     zsh: number,
   ) {
-    const thetaArray = this.linspace(0, this.math.multiply(2, this.math.pi), RESOLUTION);
-    // const theta = this.math.range(0, this.math.multiply(2, this.math.pi), RESOLUTION);
-    const theta = this.math.matrix(thetaArray);
+    const theta = getTheta(RESOLUTION);
 
     // S = sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
-    const S = this.getS(theta, zg, e, rsh, rd);
+    const S = getS(theta, zg, e, rsh, rd);
     // l = e * np.cos(zg * theta) + S;
-    const l = this.math
-      .chain(theta)
-      .multiply(zg)
-      .map(this.math.cos)
-      .multiply(e)
-      .add(S)
-      .done() as Matrix;
+    const l = getL(theta, zg, e, S);
     // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
-    const Xi = this.getXi(theta, zg, e, S);
+    const Xi = getXi(theta, zg, e, S);
 
     // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
-    const x = this.getX_Y(theta, l, Xi, rsh, 'sin');
+    const x = getX_Y(theta, l, Xi, rsh, 'sin');
     // y = l*np.cos(theta) + rsh * np.cos(theta + Xi);
-    const y = this.getX_Y(theta, l, Xi, rsh, 'cos');
+    const y = getX_Y(theta, l, Xi, rsh, 'cos');
 
     // xy = np.stack((x, y), axis=1);
-    const xy = this.stack(x, y);
+    const xy = stack(x, y);
 
     // sh_angle = np.linspace(0, 1, zsh+1) * 2*np.pi
-    const sh_angleLN = this.linspace(0, 1, +this.math.add(zsh, 1).toFixed(0));
-    const sh_angleMx = this.math.matrix(sh_angleLN).map(bignumber);
-    const sh_angle = this.math
-      .chain(sh_angleMx)
-      .multiply(this.math.pi)
-      .multiply(2)
-      .done();
+    const sh_angleLN = getSh_angleLN(zsh);
+    const sh_angleMx = getSh_angleMx(sh_angleLN);
+    const sh_angle = getSh_angle(sh_angleMx);
 
     // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
-    const S_sh = this.getS(sh_angle, zg, e, rsh, rd);
+    const S_sh = getS(sh_angle, zg, e, rsh, rd);
     // l_Sh = e * np.cos(zg * sh_angle) + S_sh;
-    const l_Sh = this.math
-      .chain(sh_angle)
-      .multiply(zg)
-      .map(this.math.cos)
-      .multiply(e)
-      .add(S_sh)
-      .done();
+    const l_Sh = getL_Sh(sh_angle,zg, e, S_sh);
     // x_sh = l_Sh*np.sin(sh_angle);
-    const x_sh = this.math
-      .chain(sh_angle)
-      .map(this.math.sin)
-      .dotMultiply(l_Sh)
-      .done();
+    const x_sh = getX_sh(sh_angle, l_Sh);
     // y_sh = l_Sh*np.cos(sh_angle);
-    const y_sh = this.math
-      .chain(sh_angle)
-      .map(this.math.cos)
-      .dotMultiply(l_Sh)
-      .done();
+    const y_sh = getY_sh(sh_angle, l_Sh);
 
     return {
       theta,
@@ -238,149 +315,4 @@ export class CalculationService {
       }
     });
   }
-
-  /**
-   * Calculates the result matrix based on the provided angular matrix, gear teeth count, eccentricity, shaft radius, and disk radius.
-   *
-   * @note To calculate S_sh use sh_angle instead of theta.
-   *
-   * The calculation involves:
-   * 1. Multiplying each element of the `theta` matrix by `zg`.
-   * 2. Applying the sine function to each element of the resulting matrix.
-   * 3. Multiplying each sine value by `e` and squaring the result.
-   * 4. Adding `rsh` and `rd`, squaring the sum, and subtracting the squared sine values from this.
-   * 5. Taking the square root of the result.
-   *
-   * @param theta (sh_angle) - A matrix of angular values (in radians).
-   * @param zg - The number of gear teeth.
-   * @param e - The eccentricity value.
-   * @param rsh - The shaft radius.
-   * @param rd - The disk radius.
-   * @returns The resulting matrix after performing the described calculations.
-   */
-  private getS(theta: Matrix, zg: number, e: number, rsh: number, rd: number): MathType {
-    // S = sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * theta), 2));
-    // S_sh = np.sqrt((rsh + rd) ** 2 - np.power(e * np.sin(zg * sh_angle), 2));
-    // Difference between S and S_sh is only `sh_angle` instead of `theta`
-    // subtrahend = (rsh + rd) ** 2
-    const subtrahend = this.math
-      .chain(rsh)
-      .add(rd)
-      .pow(2)
-      .done();
-    // subtractor = np.power(e * np.sin(zg * theta), 2)
-    const subtractor = this.math
-      .chain(theta)
-      .multiply(zg)
-      .map(this.math.sin)
-      .multiply(e)
-      .map(this.math.square)
-      .done();
-    // sqrt(subtrahend - subtractor)
-    return this.math
-      .chain(subtractor)
-      .map(val => this.math.subtract(subtrahend, val))
-      .map(this.math.sqrt)
-      .done();
-  }
-
-  /**
-   * Calculates the Xi matrix using the arctangent of the ratio between a transformed theta matrix and S.
-   *
-   * Xi is computed as: Xi = arctan2(e * zg * sin(zg * theta), S)
-   *
-   * @param theta - The input matrix of angular values.
-   * @param zg - The gear ratio or multiplier applied to theta.
-   * @param e - The eccentricity or scaling factor applied to the result.
-   * @param S - The denominator matrix or value for the arctangent calculation.
-   * @returns The resulting Xi matrix after applying the arctangent operation.
-   */
-  private getXi(theta: Matrix, zg: number, e: number, S: MathType): Matrix {
-    // Xi = np.arctan2(e*zg*np.sin(zg*theta), S);
-    // atanArg = e*zg*np.sin(zg*theta)
-    const atanArg = this.math
-      .chain(theta)
-      .multiply(zg)
-      .map(this.math.sin)
-      .multiply(zg)
-      .multiply(e)
-      .done();
-    return this.math.atan2(atanArg, S as Matrix);
-  }
-
-  /**
-   * Calculates the X or Y coordinate based on the provided parameters using matrix operations.
-   *
-   * The calculation follows the formula:
-   *   result = l * func(theta) + rsh * func(theta + Xi)
-   *
-   * @param theta - A matrix representing the angle(s) theta.
-   * @param l - The length or scalar multiplier for the first term.
-   * @param Xi - A matrix or value to be added to theta for the second term.
-   * @param rsh - The scalar multiplier for the second term.
-   * @param func - A function to apply to the angle(s), such as Math.sin or Math.cos.
-   * @returns The computed matrix or value representing the coordinate.
-   */
-  private getX_Y(theta: Matrix, l: Matrix, Xi: Matrix, rsh: number, tFuncName: 'sin' | 'cos') {
-    const func = tFuncName === 'sin' ? this.math.sin : this.math.cos;
-    // x = l*np.sin(theta) + rsh * np.sin(theta + Xi);
-    // termA = l * np.sin(theta)
-    const funcTheta = this.math.map(theta, func);
-    const termA = this.math.dotMultiply(l, funcTheta);
-    // termB = rsh * np.sin(theta + Xi)
-    const thetaXi = this.math.add(theta, Xi);
-    const termB = this.math
-      .chain(thetaXi)
-      .map(func)
-      .multiply(rsh)
-      .done();
-    return this.math.add(termA, termB);
-  }
-
-  private linspace(start: number, end: number, count: number): number[] | BigNumber[] {
-    if (count < 2) {
-        return [start];
-    }
-    const step = this.math
-      .chain(end)
-      .subtract(start)
-      .divide(
-        this.math.subtract(count, 1)
-      )
-      .done();
-
-    return Array.from({ length: count }, (_, i) =>
-      this.math
-        .chain(step)
-        .multiply(i)
-        .add(start)
-        .done()
-    );
-  }
-
-  private stack(x: Matrix, y: Matrix): Matrix {
-    const xSize = x.size();
-    const ySize = y.size();
-    if(xSize.length !== ySize.length) {
-      throw new Error('IndexError: size of X and Y should be the same while stack!');
-    }
-    const length = xSize[0] > ySize[0] ? xSize[0] : ySize[0];
-    const resultArr = [];
-    for(let i = 0; i < length; i++) {
-      resultArr.push([ x.get([i]) ?? 0, y.get([i]) ?? 0 ]);
-    }
-    return this.math.matrix(resultArr);
-  }
-}
-
-if (typeof Worker !== 'undefined') {
-  // Create a new
-  const worker = new Worker(new URL('./calculation.worker', import.meta.url));
-  worker.onmessage = ({ data }) => {
-    console.log(`page got message: ${data}`);
-  };
-  worker.postMessage('hello');
-} else {
-  // Web Workers are not supported in this environment.
-  // You should add a fallback so that your program still executes correctly.
 }
