@@ -73,6 +73,15 @@ export class CalculationService {
         RESOLUTION,
         params: { zg, rsh, e, rd, zsh }
       });
+
+      this.worker.onmessage = ({ data }) => {
+        if (data.type === 'PROGRESS_UPDATE') {
+          this.progressSubject.next(data);
+        } else if (data.type === 'CALCULATION_COMPLETE') {
+          this.resultSubject.next(data.result);
+          this.resultSubject.complete();
+        }
+      };
     } else {
       // Fallback: execute in main flow
       setTimeout(() => {

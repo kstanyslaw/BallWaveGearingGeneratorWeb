@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { RefresherCustomEvent } from '@ionic/angular';
-import { InputDataService } from '../services/input-data.service';
+import { InputDataService } from 'src/app/services/input-data.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { InputField } from '../interfaces/input-field';
-import { CalculationService } from '../services/calculation.service';
-import { RenderService } from '../services/render.service';
-import { AlertService } from '../common/components/alert/alert.service';
+import { InputField } from 'src/app/interfaces/input-field';
+import { CalculationService } from 'src/app/services/calculation.service';
+import { RenderService } from 'src/app/services/render.service';
+import { AlertService } from 'src/app/common/components/alert/alert.service';
+import { Subscription } from 'rxjs';
+import { CalculationResult } from 'src/app/interfaces/calculation-result';
 
 @Component({
   selector: 'app-home',
@@ -23,6 +25,17 @@ export class HomePage {
   inputFlags!: InputField[];
   showFlags: boolean = false;
   darkTheme: boolean = true;
+
+  // calculation
+  isCalculating = false;
+  progress = 0;
+  currentStage = '';
+  currentStep?: number;
+  totalSteps?: number;
+  result?: CalculationResult;
+  error?: string;
+
+  private calculationSubs: Subscription[] = [];
 
   constructor(private fb: FormBuilder) {}
 
@@ -90,34 +103,78 @@ export class HomePage {
       console.log(subHeader);
       console.log(message);
     } else {
-      const { xy, x_sh, y_sh } = this.calcService.calculateAdditionalParams(
-        RESOLUTION,
-        zg,
-        rsh,
-        e,
-        rd,
-        zsh
+      // const { xy, x_sh, y_sh } = this.calcService.calculateAdditionalParams(
+      //   RESOLUTION,
+      //   zg,
+      //   rsh,
+      //   e,
+      //   rd,
+      //   zsh
+      // );
+      this.resetState();
+      this.isCalculating = true;
+      this.currentStage = 'Подготовка...';
+      const { progress$, result$ } = this.calcService.calculateWithProgress(RESOLUTION, zg, rsh, e, rd, zsh);
+
+      // Подписка на обновления прогресса
+      this.calculationSubs.push(
+        progress$.subscribe({
+          next: update => {
+            this.progress = update.progress;
+            this.currentStage = update.stage;
+            this.currentStep = update.currentStep;
+            this.totalSteps = update.totalSteps;
+
+            // TO REMOVE
+            console.log('progress:', this.progress);
+            console.log('stage:', this.currentStage);
+            console.log('step: ', this.currentStep);
+            console.log('-----------------------------');
+          },
+          error: err => {
+            console.error('Ошибка прогресса:', err);
+          }
+        })
       );
-      this.calcService.convertMatrixToArray(xy);
-      this.renderService.generateWheelProfile({
-        BASE_WHEEL_SHAPE,
-        SEPARATOR,
-        ECCENTRIC,
-        BALLS,
-        OUT_DIAMETER,
-        xy: this.calcService.convertMatrixToArray(xy) as [number, number][],
-        Rout,
-        Rin,
-        Rsep_out,
-        Rsep_in,
-        e,
-        rd,
-        zsh,
-        rsh,
-        x_sh: this.calcService.convertMatrixToArray(x_sh),
-        y_sh: this.calcService.convertMatrixToArray(y_sh),
-        D
-      }, OUT_FILE);
+
+      // Подписка на результат
+      this.calculationSubs.push(
+        result$.subscribe({
+          next: result => {
+            this.result = result;
+            this.isCalculating = false;
+          },
+          error: err => {
+            this.error = `Ошибка: ${err.message || err}`;
+            this.isCalculating = false;
+            console.error('Ошибка вычислений:', err);
+          },
+          complete: () => {
+            this.isCalculating = false;
+          }
+        })
+      );
+
+      // this.calcService.convertMatrixToArray(xy);
+      // this.renderService.generateWheelProfile({
+      //   BASE_WHEEL_SHAPE,
+      //   SEPARATOR,
+      //   ECCENTRIC,
+      //   BALLS,
+      //   OUT_DIAMETER,
+      //   xy: this.calcService.convertMatrixToArray(xy) as [number, number][],
+      //   Rout,
+      //   Rin,
+      //   Rsep_out,
+      //   Rsep_in,
+      //   e,
+      //   rd,
+      //   zsh,
+      //   rsh,
+      //   x_sh: this.calcService.convertMatrixToArray(x_sh),
+      //   y_sh: this.calcService.convertMatrixToArray(y_sh),
+      //   D
+      // }, OUT_FILE);
     }
   }
 
@@ -206,5 +263,24 @@ export class HomePage {
   toggleDarkPalette(shouldAdd: boolean) {
     localStorage.setItem('theme', shouldAdd ? 'dark' : 'light');
     document.documentElement.classList.toggle('ion-palette-dark', shouldAdd);
+  }
+
+  private resetState() {
+    this.progress = 0;
+    this.currentStage = '';
+    this.currentStep = undefined;
+    this.totalSteps = undefined;
+    this.result = undefined;
+    this.error = undefined;
+  }
+
+  ngOnDestroy() {
+    // Отписка от всех подписок
+    this.calculationSubs.forEach(sub => sub.unsubscribe());
+
+    // Автоматическая отмена вычислений при выходе
+    if (this.isCalculating) {
+      this.calcService.abortCalculation();
+    }
   }
 }
